@@ -60,6 +60,11 @@ class Inspector:
         splt_path = path.split("/")
         path_dir = "/".join(splt_path[:-1])
         dataset = splt_path[1]  # LibriSpeech
+
+        if dataset == "CommonVoice":
+            path = path.replace(".wav", ".mp3")
+        # CommonVoice 데이터셋은 .mp3로 구성됐으므로 오직 빠진 파일이 있는지 체크하는 용도로만 사용함
+
         file_name = splt_path[-1]  # path_to_audio.flac
         real_path = f"{prefix}{path}"
 
