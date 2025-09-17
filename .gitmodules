@@ -1,0 +1,4 @@
+[submodule "salmonn"]
+	path = salmonn
+	url = https://github.com/jaeeewon/SALMONN.git
+	branch = salmonn
