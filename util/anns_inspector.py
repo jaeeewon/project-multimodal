@@ -146,7 +146,7 @@ class Inspector:
                 # print(f"saved ensured anns to {save_path}")
 
                 # split into train, valid, test
-                ds_rate = {"train": 0.8, "valid": 0.1, "test": 0.1}
+                ds_rate = {"train": 0.9, "valid": 0.05, "test": 0.05}
                 ds = {"train": [], "valid": [], "test": []}
 
                 for d in store_list:
