@@ -23,7 +23,8 @@
 - downloaded from huggingface and moved
 
 ### WavCaps - partially prepared (39.69% for QA and 29.18% for audiocaption)
-- downloaded from huggingface
+- downloaded from aac_datasets
+- symlink /DB/WavCaps WavCaps first
 - located at /home/jpong/.cache/huggingface/hub/datasets--cvssp--WavCaps/snapshots/85a0c21e26fa7696a5a74ce54fada99a9b43c6de
 - symlink using `ln -s /home/jpong/.cache/huggingface/hub/datasets--cvssp--WavCaps/snapshots/85a0c21e26fa7696a5a74ce54fada99a9b43c6de/Audio WavCaps`
     - WavCaps/AudioSet_SL | prepared
@@ -33,6 +34,10 @@
 ### Clotho - partially prepared (75.36%)
 - downloaded from huggingface | Clotho-v1
 - some checks are required,,
+
+### AudioCaps - ing
+- downloaded from huggingface | https://huggingface.co/datasets/OpenSound/AudioCaps
+- symlink is planned
 
 </details>
 

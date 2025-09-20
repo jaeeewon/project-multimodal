@@ -70,6 +70,11 @@ class Inspector:
 
         key = "ready" if os.path.exists(real_path) else "not_ready"
 
+        save_anns = cfg.get("save_anns", True)
+        if save_anns and key == "ready":
+            ann["path"] = real_path
+            store_list.append(ann)
+
         if task not in store_dict:
             store_dict[task] = {}
         if dataset not in store_dict[task]:
@@ -101,17 +106,23 @@ class Inspector:
             print(store_dict)
 
     def get_ready_rate(
-        self, print_statics=True, inspect_audio=True, print_not_exists=True, prefix="./"
+        self,
+        print_statics=True,
+        inspect_audio=True,
+        print_not_exists=True,
+        prefix="./",
+        save_anns=True,
     ):
         for train_set in self.train_sets:
             print(f"===== {train_set} =====")
-            store_dict, _ = inspect_anns(
+            store_dict, store_list = inspect_anns(
                 f"./ann/{train_set}",
                 self._check_data_exists,
                 {
                     "inspect_audio": inspect_audio,
                     "print_not_exists": print_not_exists,
                     "prefix": prefix,
+                    "save_anns": save_anns,
                 },
             )
             if print_statics:
@@ -124,6 +135,34 @@ class Inspector:
                         print(
                             f"[{task}] {dataset} | ready: {ready}, not_ready: {not_ready}, total: {total} | ready_rate: {ready_rate:.2f}%"
                         )
+
+            if save_anns:
+                import json
+                import random
+
+                # save_path = f"./ann/{train_set}_ensured.json"
+                # with open(save_path, "w") as f:
+                #     json.dump({"annotation": store_list}, f)
+                # print(f"saved ensured anns to {save_path}")
+
+                # split into train, valid, test
+                ds_rate = {"train": 0.8, "valid": 0.1, "test": 0.1}
+                ds = {"train": [], "valid": [], "test": []}
+
+                for d in store_list:
+                    rand = random.random()
+                    if rand < ds_rate["train"]:
+                        ds["train"].append(d)
+                    elif rand < ds_rate["train"] + ds_rate["valid"]:
+                        ds["valid"].append(d)
+                    else:
+                        ds["test"].append(d)
+
+                for dset in ds:
+                    save_path = f"./ann/{train_set}_{dset}_ensured.json"
+                    with open(save_path, "w") as f:
+                        json.dump({"annotation": ds[dset]}, f)
+                    print(f"saved ensured anns to {save_path}")
 
 
 if __name__ == "__main__":
