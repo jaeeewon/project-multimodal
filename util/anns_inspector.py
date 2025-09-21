@@ -1,6 +1,7 @@
 import os
 import ijson
 import soundfile as sf
+from tqdm import tqdm
 from typing import Callable, Any
 from collections.abc import Iterator
 
@@ -17,7 +18,12 @@ def inspect_anns(
     store_list = []
     with open(filename, "rb") as f:
         anns: Iterator[dict] = ijson.items(f, "annotation.item")
-        for ann in anns:
+        anns_count = sum(1 for _ in anns)
+
+        f.seek(0)
+        anns = ijson.items(f, "annotation.item")
+
+        for ann in tqdm(anns, total=anns_count, desc=f"inspecting {filename}..."):
             fn(ann, cfg, store_dict, store_list)
 
     return (store_dict, store_list)
@@ -99,6 +105,33 @@ class Inspector:
 
         store_dict[task][dataset][key].append(file_name)
 
+    def _check_media_integrity(
+        self, ann: dict, cfg: dict, store_dict: dict, store_list: list
+    ):
+        task = ann.get("task")
+        # {"path": "/LibriSpeech/train-clean-100/path_to_audio.flac", "text": "recognized", "task": "asr"}
+        path = ann.get("path")
+        prefix = cfg.get("prefix")
+        splt_path = path.split("/")
+        path_dir = "/".join(splt_path[:-1])
+        dataset = splt_path[1]  # LibriSpeech
+
+        if dataset == "CommonVoice":
+            path = path.replace(".wav", ".mp3")
+        # CommonVoice 데이터셋은 .mp3로 구성됐으므로 오직 빠진 파일이 있는지 체크하는 용도로만 사용함
+
+        file_name = splt_path[-1]  # path_to_audio.flac
+        real_path = f"{prefix}{path}"
+
+        key = "ready" if os.path.exists(real_path) else "not_ready"
+
+        if key == "ready":
+            try:
+                sf.read(real_path)
+            except Exception as e:
+                store_list.append(real_path)
+                print(f"failed to load audio for {real_path}: {e}")
+
     def get_stats(self):
         for train_set in self.train_sets:
             print(f"===== {train_set} =====")
@@ -164,13 +197,33 @@ class Inspector:
                         json.dump({"annotation": ds[dset]}, f)
                     print(f"saved ensured anns to {save_path}")
 
+    def get_media_integrity(
+        self,
+        prefix="./",
+    ):
+        for train_set in self.train_sets:
+            print(f"===== {train_set} =====")
+            _, store_list = inspect_anns(
+                f"./ann/{train_set}",
+                self._check_media_integrity,
+                {
+                    "prefix": prefix,
+                },
+            )
+            print(f"total invalid files: {len(store_list)}")
+            if len(store_list) > 0:
+                print("[invalid files]")
+                for f in store_list:
+                    print(f)
+
 
 if __name__ == "__main__":
     inspector = Inspector()
     # inspector.get_stats()
-    inspector.get_ready_rate(
-        print_statics=True,
-        inspect_audio=False,
-        print_not_exists=False,
-        prefix="/home/jpong/Workspace/jaeeewon",
-    )
+    # inspector.get_ready_rate(
+    #     print_statics=True,
+    #     inspect_audio=False,
+    #     print_not_exists=False,
+    #     prefix="/home/jpong/Workspace/jaeeewon",
+    # )
+    inspector.get_media_integrity(prefix="/home/jpong/Workspace/jaeeewon")
