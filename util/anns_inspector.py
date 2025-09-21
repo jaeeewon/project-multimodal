@@ -36,6 +36,10 @@ class Inspector:
         "salmonn_stage3_data.json",
     ]
 
+    invalid_files = [
+        "/home/jpong/Workspace/jaeeewon/WavCaps/AudioSet_SL/Ym5l8FhW_RtA.flac"
+    ]
+
     def __init__(self, train_sets=None):
         if train_sets is not None:
             self.train_sets = train_sets
@@ -74,7 +78,11 @@ class Inspector:
         file_name = splt_path[-1]  # path_to_audio.flac
         real_path = f"{prefix}{path}"
 
-        key = "ready" if os.path.exists(real_path) else "not_ready"
+        key = (
+            "ready"
+            if os.path.exists(real_path) and real_path not in self.invalid_files
+            else "not_ready"
+        )
 
         save_anns = cfg.get("save_anns", True)
         if save_anns and key == "ready":
@@ -220,10 +228,10 @@ class Inspector:
 if __name__ == "__main__":
     inspector = Inspector()
     # inspector.get_stats()
-    # inspector.get_ready_rate(
-    #     print_statics=True,
-    #     inspect_audio=False,
-    #     print_not_exists=False,
-    #     prefix="/home/jpong/Workspace/jaeeewon",
-    # )
-    inspector.get_media_integrity(prefix="/home/jpong/Workspace/jaeeewon")
+    inspector.get_ready_rate(
+        print_statics=True,
+        inspect_audio=False,
+        print_not_exists=False,
+        prefix="/home/jpong/Workspace/jaeeewon",
+    )
+    # inspector.get_media_integrity(prefix="/home/jpong/Workspace/jaeeewon")
