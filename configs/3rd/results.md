@@ -12,7 +12,7 @@
 ## log
 
 ### abortion log
-```log
+```bash
 Train: data epoch: [5]  [2375/3000]  eta: 0:03:45  lr: 0.000042  loss: 2.8917  time: 0.3609  data: 0.0000  max mem: 26051
 [rank1]: Traceback (most recent call last):
 [rank1]:   File "/home/jpong/Workspace/jaeeewon/repr_salmonn/salmonn/train.py", line 91, in <module>
@@ -70,7 +70,7 @@ Root Cause (first observed failure):
 ```
 
 ### train | 6th epoch | completed
-```log
+```bash
 Train: data epoch: [0]  [2999/3000]  eta: 0:00:00  lr: 0.000045  loss: 2.4855  time: 0.3629  data: 0.0000  max mem: 25096
 Train: data epoch: [0] Total time: 0:18:03 (0.3613 s / it)
 /home/jpong/miniconda3/envs/salmonn/lib/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user.
@@ -78,7 +78,7 @@ Train: data epoch: [0] Total time: 0:18:03 (0.3613 s / it)
 2025-09-21 09:15:30,326 [INFO] Averaged stats: lr: 0.0000  loss: 3.074
 ```
 ### eval | 6th epoch | completed
-```log
+```bash
 Eval: data epoch: [0]  [2846/2847]  eta: 0:00:00    time: 0.2215  data: 0.0002  max mem: 25096
 Eval: data epoch: [0] Total time: 0:10:52 (0.2290 s / it)
 2025-09-21 09:26:25,921 [INFO] Saving checkpoint at epoch 0 to /home/jpong/Workspace/jaeeewon/SALMONN_output/202509210856/checkpoint_best.pth.

@@ -12,7 +12,7 @@
 ## log
 
 ### train | 1st epoch | completed
-```log
+```bash
 Train: data epoch: [0]  [2999/3000]  eta: 0:00:00  lr: 0.000030  loss: 2.5391  time: 0.3619  data: 0.0000  max mem: 25096
 Train: data epoch: [0] Total time: 0:18:03 (0.3612 s / it)
 /home/jpong/miniconda3/envs/salmonn/lib/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user.
@@ -21,7 +21,7 @@ Train: data epoch: [0] Total time: 0:18:03 (0.3612 s / it)
 ```
 
 ### eval | 4th epoch | completed
-```log
+```bash
 Eval: data epoch: [3]  [2846/2847]  eta: 0:00:00    time: 0.2204  data: 0.0001  max mem: 26051
 Eval: data epoch: [3] Total time: 0:10:51 (0.2287 s / it)
 2025-09-21 11:33:16,502 [INFO] Saving checkpoint at epoch 3 to /home/jpong/Workspace/jaeeewon/SALMONN_output/202509210936/checkpoint_best.pth.
@@ -29,14 +29,14 @@ Eval: data epoch: [3] Total time: 0:10:51 (0.2287 s / it)
 ```
 
 ### train | 5th epoch | completed
-```log
+```bash
 Train: data epoch: [4]  [2999/3000]  eta: 0:00:00  lr: 0.000029  loss: 3.3206  time: 0.3611  data: 0.0000  max mem: 26051
 Train: data epoch: [4] Total time: 0:18:00 (0.3603 s / it)
 2025-09-21 11:51:18,051 [INFO] Averaged stats: lr: 0.0000  loss: 3.088
 ```
 
 ### eval | 5th epoch | completed
-```log
+```bash
 Eval: data epoch: [4]  [2846/2847]  eta: 0:00:00    time: 0.2202  data: 0.0002  max mem: 26051
 Eval: data epoch: [4] Total time: 0:10:50 (0.2287 s / it)
 2025-09-21 12:02:13,055 [INFO] Saving checkpoint at epoch 4 to /home/jpong/Workspace/jaeeewon/SALMONN_output/202509210936/checkpoint_best.pth.
@@ -44,7 +44,7 @@ Eval: data epoch: [4] Total time: 0:10:50 (0.2287 s / it)
 ```
 
 ### abortion log
-```log
+```bash
 Train: data epoch: [5]  [2375/3000]  eta: 0:03:45  lr: 0.000028  loss: 2.8869  time: 0.3613  data: 0.0000  max mem: 26051
 [rank1]: Traceback (most recent call last):
 [rank1]:   File "/home/jpong/Workspace/jaeeewon/repr_salmonn/salmonn/train.py", line 91, in <module>

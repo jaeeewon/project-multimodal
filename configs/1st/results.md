@@ -10,7 +10,7 @@
 ## log
 
 ### train | 1st epoch | completed
-```log
+```bash
 Train: data epoch: [0]  [2999/3000]  eta: 0:00:00  lr: 0.000030  loss: 3.5553  time: 0.4929  data: 0.0000  max mem: 26527
 Train: data epoch: [0] Total time: 0:24:39 (0.4930 s / it)
 /home/jpong/miniconda3/envs/salmonn/lib/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user.
@@ -21,7 +21,7 @@ Train: data epoch: [0] Total time: 0:24:39 (0.4930 s / it)
 ```
 
 ### eval | 1st epoch | completed
-```log
+```bash
 Eval: data epoch: [0]  [4253/4254]  eta: 0:00:00    time: 0.2819  data: 0.0002  max mem: 26527
 Eval: data epoch: [0] Total time: 0:20:32 (0.2897 s / it)
 2025-09-21 00:43:10,500 [INFO] Saving checkpoint at epoch 0 to /home/jpong/Workspace/jaeeewon/SALMONN_output/202509202357/checkpoint_best.pth.
@@ -29,7 +29,7 @@ Eval: data epoch: [0] Total time: 0:20:32 (0.2897 s / it)
 ```
 
 ### train | 2nd epoch | crashed
-```log
+```bash
 Train: data epoch: [1]  [ 285/3000]  eta: 0:22:16  lr: 0.000030  loss: 2.7421  time: 0.4907  data: 0.0000  max mem: 26527
 [rank3]: Traceback (most recent call last):
 [rank3]:   File "/home/jpong/Workspace/jaeeewon/repr_salmonn/salmonn/train.py", line 91, in <module>
