@@ -69,7 +69,7 @@ Root Cause (first observed failure):
 ============================================================
 ```
 
-#### train | 6th epoch | completed
+### train | 6th epoch | completed
 ```log
 Train: data epoch: [0]  [2999/3000]  eta: 0:00:00  lr: 0.000045  loss: 2.4855  time: 0.3629  data: 0.0000  max mem: 25096
 Train: data epoch: [0] Total time: 0:18:03 (0.3613 s / it)
