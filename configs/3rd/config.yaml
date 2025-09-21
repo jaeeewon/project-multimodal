@@ -20,7 +20,7 @@ model:
   whisper_path: "/home/jpong/Workspace/jaeeewon/whisper-medium"
   beats_path: "/home/jpong/Workspace/jaeeewon/beats/BEATs_iter3_plus_AS2M_finetuned_on_AS2M_cpt2.pt"
 
-  ckpt: "" # if not "", load model from ckpt for training or evaluation
+  ckpt: "/home/jpong/Workspace/jaeeewon/SALMONN_output/202509210249/checkpoint_4.pth" # if not "", load model from ckpt for training or evaluation
 
   freeze_whisper: True
   freeze_beats: True

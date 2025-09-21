@@ -54,6 +54,8 @@ Eval: data epoch: [1] Total time: 0:10:34 (0.2601 s / it)
 ```json
 {"valid_loss": 3.076000690460205, "valid_agg_metrics": 0.3925953209400177, "valid_best_epoch": 0}
 ```
+
+### second epoch
 #### train | 2nd epoch | completed
 ```json
 {"train_lr": "0.000", "train_loss": "3.111"}
