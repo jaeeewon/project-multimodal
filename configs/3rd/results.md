@@ -69,7 +69,37 @@ Root Cause (first observed failure):
 ============================================================
 ```
 
+#### train | 6th epoch | completed
+```log
+Train: data epoch: [0]  [2999/3000]  eta: 0:00:00  lr: 0.000045  loss: 2.4855  time: 0.3629  data: 0.0000  max mem: 25096
+Train: data epoch: [0] Total time: 0:18:03 (0.3613 s / it)
+/home/jpong/miniconda3/envs/salmonn/lib/python3.9/site-packages/torch/distributed/distributed_c10d.py:4807: UserWarning: No device id is provided via `init_process_group` or `barrier `. Using the current device set by the user.
+  warnings.warn(  # warn only once
+2025-09-21 09:15:30,326 [INFO] Averaged stats: lr: 0.0000  loss: 3.074
+```
+### eval | 6th epoch | completed
+```log
+Eval: data epoch: [0]  [2846/2847]  eta: 0:00:00    time: 0.2215  data: 0.0002  max mem: 25096
+Eval: data epoch: [0] Total time: 0:10:52 (0.2290 s / it)
+2025-09-21 09:26:25,921 [INFO] Saving checkpoint at epoch 0 to /home/jpong/Workspace/jaeeewon/SALMONN_output/202509210856/checkpoint_best.pth.
+2025-09-21 09:26:26,211 [INFO] Saving checkpoint at epoch 0 to /home/jpong/Workspace/jaeeewon/SALMONN_output/202509210856/checkpoint_0.pth.
+```
+
 ## result
+
+![loss_graph_1](attempt3_1st_loss.svg)
+- loss until epoch 5
+
+![lr_graph_1](attempt3_1st_lr.svg)
+- lr until epoch 5
+
+### resumed
+
+![loss_graph](attempt3_2nd_loss.svg)
+- loss during epoch 6
+
+![lr_graph](attempt3_2nd_lr.svg)
+- lr during epoch 6
 
 ### first epoch
 #### train | 1st epoch | completed
@@ -119,4 +149,14 @@ Root Cause (first observed failure):
 #### eval | 5th | completed
 ```json
 {"valid_loss": 3.0204429626464844, "valid_agg_metrics": 0.39962702989578247, "valid_best_epoch": 4}
+```
+
+### sixth epoch - resumed
+#### train | 6th | completed
+```json
+{"train_lr": "0.000", "train_loss": "3.075"}
+```
+#### eval | 6th | completed
+```json
+{"valid_loss": 3.0166752338409424, "valid_agg_metrics": 0.39996036887168884, "valid_best_epoch": 0}
 ```
