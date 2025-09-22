@@ -18,3 +18,11 @@
 ## log
 
 ## result
+```json
+{"train_lr": "0.000", "train_loss": "3.284"}
+{"valid_loss": 3.0861737728118896, "valid_agg_metrics": 0.39642372727394104, "valid_best_epoch": 0}
+{"train_lr": "0.000", "train_loss": "3.109"}
+{"valid_loss": 3.0639214515686035, "valid_agg_metrics": 0.39976343512535095, "valid_best_epoch": 1}
+{"train_lr": "0.000", "train_loss": "3.091"}
+{"valid_loss": 3.0458645820617676, "valid_agg_metrics": 0.4011201858520508, "valid_best_epoch": 2}
+```
