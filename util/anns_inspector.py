@@ -187,7 +187,7 @@ class Inspector:
                 # print(f"saved ensured anns to {save_path}")
 
                 # split into train, valid, test
-                ds_rate = {"train": 0.9, "valid": 0.05, "test": 0.05}
+                ds_rate = {"train": 0.99, "valid": 0.005, "test": 0.005}
                 ds = {"train": [], "valid": [], "test": []}
 
                 for d in store_list:
@@ -230,8 +230,9 @@ if __name__ == "__main__":
     # inspector.get_stats()
     inspector.get_ready_rate(
         print_statics=True,
-        inspect_audio=False,
+        inspect_audio=True,
         print_not_exists=False,
         prefix="/home/jpong/Workspace/jaeeewon",
+        save_anns=False
     )
     # inspector.get_media_integrity(prefix="/home/jpong/Workspace/jaeeewon")

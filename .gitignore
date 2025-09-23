@@ -2,3 +2,4 @@
 dataset/
 hf/
 *_ensured.json
+.secret
