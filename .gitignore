@@ -1,5 +1,7 @@
 .vscode/
 dataset/
 hf/
+__pycache__/
 *_ensured.json
 .secret
+*.tsv
