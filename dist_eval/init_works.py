@@ -4,6 +4,7 @@ import os
 import time
 from typing import Callable, Any
 from collections import Counter
+import pandas as pd
 
 
 class SalmonnRedis:
@@ -88,7 +89,11 @@ class SalmonnRedis:
             self.PROCESSING_QUEUE.format(task_name),
         ]
 
-        task_keys = [k for k in self.client.scan_iter(f"{TASK_HASH_PREFIX}*") if k not in passkeys]
+        task_keys = [
+            k
+            for k in self.client.scan_iter(f"{TASK_HASH_PREFIX}*")
+            if k not in passkeys
+        ]
         total_tasks = len(task_keys)
 
         if total_tasks == 0:
@@ -103,7 +108,7 @@ class SalmonnRedis:
 
             status = task_data.get("status")
 
-            if overwrite and (status == "failed" or 'worker' in status):
+            if overwrite and (status == "failed" or "worker" in status):
                 self.client.hset(key, "status", "initialized")
                 task_id = task_data.get("id")
                 PENDING_QUEUE = self.PENDING_QUEUE.format(task_name)
@@ -114,7 +119,7 @@ class SalmonnRedis:
 
             if status == "completed":
                 completed_tasks += 1
-        
+
         title = f"===== Statistics of {task_name} task ====="
 
         print(title)
@@ -127,6 +132,22 @@ class SalmonnRedis:
 
 if __name__ == "__main__":
     pass
+    # ===== monitor multiple tasks =====
+    # tasks = [
+    #     "en2ja",
+    #     "en2de",
+    #     "LibriSpeech-ASR-test-clean",
+    #     "LibriSpeech-ASR-test-other",
+    #     "en2zh",
+    # ]
+    # for i, task in enumerate(tasks):
+    #     tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i)
+
+    # while True:
+    #     for task in tasks:
+    #         task[1].statistics(task[0])
+    #     time.sleep(10)
+
     # ===== monitor status =====
     # r = SalmonnRedis(host="192.168.219.101", db=1)
     # while True:
@@ -134,7 +155,6 @@ if __name__ == "__main__":
     #     time.sleep(5)
 
     # ===== initialize CoVoST2 tasks =====
-    # import pandas as pd
     # ts = pd.read_csv("repr_exp/table3/CoVoST2/tr/test.tsv", sep="\t")
     # print(ts)
     # ts_list = ts.to_dict(orient="records")
@@ -154,3 +174,22 @@ if __name__ == "__main__":
     # # print(ja)
     # r = SalmonnRedis(host="192.168.219.101", db=1)
     # r.initialize_tasks("en2de", de)
+
+    # ===== initialize LibriSpeech ASR tasks =====
+    # from librispeech import get_librispeech_list
+
+    # libri = get_librispeech_list()
+    # for i, subset in enumerate(libri):
+    #     task_name = f"LibriSpeech-ASR-{subset}"
+    #     r = SalmonnRedis(host="192.168.219.101", db=i + 2)
+    #     r.initialize_tasks(task_name, libri[subset])
+    # 2: test-clean, 3: test-other
+
+    # ===== initialize en2zh tasks =====
+    # de = pd.read_csv("repr_exp/table3/CoVoST2/tr/covost_v2.en_zh-CN.tsv", sep="\t")
+    # de = de[de["split"] == "test"].to_dict(orient="records")
+    # # print(ja)
+    # r = SalmonnRedis(host="192.168.219.101", db=4)
+    # r.initialize_tasks("en2zh", de)
+
+    # ===== initialize GigaSpeech ASR tasks =====

@@ -10,12 +10,15 @@ rm -rf "tr/cv-corpus-4-en.tar.gz"
 ```bash
 wget -O "tr/covost_v2.en_de.tsv.tar.gz" https://dl.fbaipublicfiles.com/covost/covost_v2.en_de.tsv.tar.gz
 wget -O "tr/covost_v2.en_ja.tsv.tar.gz" https://dl.fbaipublicfiles.com/covost/covost_v2.en_ja.tsv.tar.gz
+wget -O "tr/covost_v2.en_zh-CN.tsv.tar.gz" https://dl.fbaipublicfiles.com/covost/covost_v2.en_zh-CN.tsv.tar.gz
 
 tar -xzvf "tr/covost_v2.en_de.tsv.tar.gz" -C "tr"
 tar -xzvf "tr/covost_v2.en_ja.tsv.tar.gz" -C "tr"
+tar -xzvf "tr/covost_v2.en_zh-CN.tsv.tar.gz" -C "tr"
 
 rm -rf "tr/covost_v2.en_de.tsv.tar.gz"
 rm -rf "tr/covost_v2.en_ja.tsv.tar.gz"
+rm -rf "tr/covost_v2.en_zh-CN.tsv.tar.gz"
 ```
 
 # 3. run python code

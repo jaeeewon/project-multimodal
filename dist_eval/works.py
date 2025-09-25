@@ -66,9 +66,53 @@ def eval_en2de(data: dict):
     return result
 
 
-# r = SalmonnRedis(host="192.168.219.101")
+def eval_en2zh(data: dict):
+    print(f"evaluating {data['path']}...")
+    path = "/home/jpong/Workspace/jaeeewon/CommonVoice/clips/" + data["path"]
+    prompt = "Listen to the speech and translate it into Chinese."
+
+    reference = data["translation"]
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    _reference = remove_puncs(reference)
+    _result = remove_puncs(result)
+
+    print(f"ref: {_reference}")
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return result
+
+
+def eval_asr(data: dict):
+    print(f"evaluating {data['path']}...")
+    path = data["path"]
+    prompt = "Recognize the speech and give me the transcription."
+
+    reference = data["sentence"]
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    _reference = remove_puncs(reference)
+    _result = remove_puncs(result)
+
+    print(f"ref: {_reference}")
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return result
+
+
+# r = SalmonnRedis(host="192.168.219.101", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
+# r = SalmonnRedis(host="192.168.219.101", db=1)
+# r.start_worker("en2de", device, eval_en2de)
 
-r = SalmonnRedis(host="192.168.219.101", db=1)
-r.start_worker("en2de", device, eval_en2de)
+# r = SalmonnRedis(host="192.168.219.101", db=2) # cuda:0
+# r.start_worker("LibriSpeech-ASR-test-clean", device, eval_asr)
+
+# r = SalmonnRedis(host="192.168.219.101", db=3) # cuda:2
+# r.start_worker("LibriSpeech-ASR-test-other", device, eval_asr)
+
+# r = SalmonnRedis(host="192.168.219.101", db=4) # cuda:3
+# r.start_worker("en2zh", device, eval_en2zh)
