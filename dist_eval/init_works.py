@@ -17,7 +17,9 @@ class SalmonnRedis:
             host=host, port=port, db=db, decode_responses=decode_responses
         )
 
-    def initialize_tasks(self, task_name: str, task_data: list[dict[str, str]]):
+    def initialize_tasks(
+        self, task_name: str, task_data: list[dict[str, str]], push_anyway=False
+    ):
         PENDING_QUEUE = self.PENDING_QUEUE.format(task_name)
         PROCESSING_QUEUE = self.PROCESSING_QUEUE.format(task_name)
         TASK_HASH_PREFIX = self.TASK_HASH_PREFIX.format(task_name)
@@ -27,9 +29,10 @@ class SalmonnRedis:
         # assert empty queues
         pending_len = self.client.llen(PENDING_QUEUE)
         processing_len = self.client.llen(PROCESSING_QUEUE)
-        assert (
-            pending_len == 0 and processing_len == 0
-        ), f"target Qs are not empty! pending: {pending_len}, processing: {processing_len}"
+        if not push_anyway:
+            assert (
+                pending_len == 0 and processing_len == 0
+            ), f"target Qs are not empty! pending: {pending_len}, processing: {processing_len}"
         # self.client.delete(PENDING_QUEUE, PROCESSING_QUEUE)
 
         for key in self.client.scan_iter(f"{TASK_HASH_PREFIX}*"):
@@ -139,6 +142,7 @@ if __name__ == "__main__":
     #     "LibriSpeech-ASR-test-clean",
     #     "LibriSpeech-ASR-test-other",
     #     "en2zh",
+    #     "GigaSpeech-ASR-test",
     # ]
     # for i, task in enumerate(tasks):
     #     tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i)
@@ -193,3 +197,16 @@ if __name__ == "__main__":
     # r.initialize_tasks("en2zh", de)
 
     # ===== initialize GigaSpeech ASR tasks =====
+    # r = SalmonnRedis(host="192.168.219.101", db=5)
+    # gis = []
+    # for i in range(3):
+    #     gi = pd.read_csv(
+    #         f"repr_exp/table3/GigaSpeech/test_chunks_000{i}_metadata.csv", sep=","
+    #     )
+    #     # https://github.com/SpeechColab/GigaSpeech?tab=readme-ov-file#text-pre-processing
+    #     # will be addressed after inference using under
+    #     # https://github.com/SpeechColab/GigaSpeech/blob/main/utils/gigaspeech_scoring.py
+    #     gi = gi.rename(columns={"sid": "file_name", "text_tn": "sentence"})
+    #     gis += gi[["file_name", "sentence"]].to_dict(orient="records")
+    #     # print(gi)
+    # r.initialize_tasks("GigaSpeech-ASR-test", gis)
