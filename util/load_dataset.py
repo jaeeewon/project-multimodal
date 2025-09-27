@@ -98,8 +98,9 @@ for key in datas:
 
 # gs = load_dataset(
 #     "speechcolab/gigaspeech",
-#     "m",
-#     token="hf_xxx"
+#     "test",
+#     token="hf_xxx",
+#     cache_dir="./hf",
 # ) # download ("xs", "s", "m")
 
 # # see structure
@@ -109,19 +110,11 @@ for key in datas:
 # audio_input = gs["train"][0]["audio"]  # first decoded audio sample
 # transcription = gs["train"][0]["text"]  # first transcription
 
-# /home/jpong/.cache/huggingface/datasets/downloads/extracted/4d0d6f35f3cc6bdb9e26cd1242e2fb1e47b7eae2e140d1ce3e4351e7045bb6c7
-# -> mv /home/jpong/.cache/huggingface/datasets/downloads/extracted/4d0d6f35f3cc6bdb9e26cd1242e2fb1e47b7eae2e140d1ce3e4351e7045bb6c7/*/* GigaSpeech/
-# ad33dd78eefc95e72fd18615fda855b083e190323936e06ea3fbd1360bfcd766
-# -> mv /home/jpong/.cache/huggingface/datasets/downloads/extracted/ad33dd78eefc95e72fd18615fda855b083e190323936e06ea3fbd1360bfcd766/*/* GigaSpeech/
-# d508c69be8f72b78b242aeb0f3ed8abb0873979ce979c5f1f397914912563248
-# -> mv /home/jpong/.cache/huggingface/datasets/downloads/extracted/d508c69be8f72b78b242aeb0f3ed8abb0873979ce979c5f1f397914912563248/*/* GigaSpeech/
-
-# shit!!!!! run under
 """
-SOURCE_DIR="/home/jpong/.cache/huggingface/datasets/downloads/extracted"
-DEST_DIR="GigaSpeech"
+SOURCE_DIR="/home/jpong/Workspace/jaeeewon/repr_salmonn/hf/downloads/extracted"
+DEST_DIR="/home/jpong/Workspace/jaeeewon/GigaSpeech"
 
-for dir in "$SOURCE_DIR"/*/*/; do
+for dir in "$SOURCE_DIR"/*/test_chunks_*/; do
   mv "$dir"* "$DEST_DIR"/
 done
 """
