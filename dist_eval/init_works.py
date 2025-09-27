@@ -53,7 +53,7 @@ class SalmonnRedis:
         self,
         task_name: str,
         device: str,
-        fn: Callable[[dict[str, Any]], Any],
+        fn: Callable[[dict[str, Any]], dict[str, Any]],
     ):
         worker_id = (
             f"worker-{os.getpid()}-{os.environ.get('CUDA_VISIBLE_DEVICES', device)}"
@@ -79,7 +79,8 @@ class SalmonnRedis:
                 self.client.hset(task_key, "status", f"'{worker_id}' processing...")
                 task_data = self.client.hgetall(task_key)
                 out = fn(task_data)
-                self.client.hset(task_key, "infer", out)
+                for k, v in out.items():
+                    self.client.hset(task_key, k, v)
                 self.client.hset(task_key, "status", "completed")
                 self.client.lrem(PROCESSING_QUEUE, 1, task_id)
 

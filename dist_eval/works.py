@@ -62,7 +62,7 @@ def eval_en2ja(data: dict):
     print(f"res: {_result}")
     print("=" * 20)
 
-    return result
+    return {"infer": result}
 
 
 def eval_en2de(data: dict):
@@ -80,7 +80,7 @@ def eval_en2de(data: dict):
     print(f"res: {_result}")
     print("=" * 20)
 
-    return result
+    return {"infer": result}
 
 
 def eval_en2zh(data: dict):
@@ -98,7 +98,7 @@ def eval_en2zh(data: dict):
     print(f"res: {_result}")
     print("=" * 20)
 
-    return result
+    return {"infer": result}
 
 
 def eval_librispeech_asr(data: dict):
@@ -116,7 +116,7 @@ def eval_librispeech_asr(data: dict):
     print(f"res: {_result}")
     print("=" * 20)
 
-    return result
+    return {"infer": result}
 
 
 def eval_gigaspeech_asr(data: dict):
@@ -134,25 +134,29 @@ def eval_gigaspeech_asr(data: dict):
     print(f"res: {_result}")
     print("=" * 20)
 
-    return result
+    return {"infer": result}
 
 
 def eval_audiocaps_aac(data: dict):
     print(f"evaluating {data['youtube_id']}...")
     path = "dataset/AudioCaps/test/" + data["youtube_id"] + ".wav"
     prompt = "Please describe the audio."
+    prompt_v2 = "Please write down what your hear in the audio."
 
     reference = data["caption"]
     result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+    result_v2 = inference.infer_one_sample(wav_path=path, prompt=prompt_v2)
 
     _reference = remove_puncs(reference)
     _result = remove_puncs(result)
+    _result_v2 = remove_puncs(result_v2)
 
     print(f"ref: {_reference}")
     print(f"res: {_result}")
+    print(f"res_v2: {_result_v2}")
     print("=" * 20)
 
-    return result
+    return {"infer": result, "infer_v2": result_v2}
 
 
 # r = SalmonnRedis(host="192.168.219.101", db=0)
