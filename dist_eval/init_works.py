@@ -169,18 +169,48 @@ if __name__ == "__main__":
     #         task[1].statistics(task[0])
     #     time.sleep(10)
 
-    # ===== monitor lora-scaled tasks =====
+    # ===== monitor lora-scaled librispeech asr tasks =====
+    # ENTER_ALT_SCREEN = "\x1b[?1049h"
+    # EXIT_ALT_SCREEN = "\x1b[?1049l"
+    # CLEAR_SCREEN = "\x1b[2J"
+    # CURSOR_HOME = "\x1b[H"
+
+    # tasks = [
+    #     "LibriSpeech-ASR-test-clean",
+    #     "LibriSpeech-ASR-test-other",
+    # ]
+    # for i, task in enumerate(tasks):
+    #     tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i + 2)
+
+    # try:
+    #     sys.stdout.write(ENTER_ALT_SCREEN)
+
+    #     while True:
+    #         sys.stdout.write(CLEAR_SCREEN)
+    #         sys.stdout.write(CURSOR_HOME)
+
+    #         sys.stdout.write(f"monitor LoRA-scaled ASR tasks\n\n")
+    #         for task in tasks:
+    #             for i in range(4):
+    #                 task_name = f"{task[0]}-ls{i:02d}"
+    #                 sys.stdout.write(task[1].statistics(task_name, return_str=True))
+    #         sys.stdout.flush()
+
+    #         time.sleep(10)
+
+    # except KeyboardInterrupt:
+    #     pass
+
+    # finally:
+    #     sys.stdout.write(EXIT_ALT_SCREEN)
+
+    # ===== monitor lora-scaled gigaspeech asr tasks =====
     ENTER_ALT_SCREEN = "\x1b[?1049h"
     EXIT_ALT_SCREEN = "\x1b[?1049l"
     CLEAR_SCREEN = "\x1b[2J"
     CURSOR_HOME = "\x1b[H"
 
-    tasks = [
-        "LibriSpeech-ASR-test-clean",
-        "LibriSpeech-ASR-test-other",
-    ]
-    for i, task in enumerate(tasks):
-        tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i + 2)
+    r = SalmonnRedis(host="192.168.219.101", db=5)
 
     try:
         sys.stdout.write(ENTER_ALT_SCREEN)
@@ -190,10 +220,9 @@ if __name__ == "__main__":
             sys.stdout.write(CURSOR_HOME)
 
             sys.stdout.write(f"monitor LoRA-scaled ASR tasks\n\n")
-            for task in tasks:
-                for i in range(4):
-                    task_name = f"{task[0]}-ls{i:02d}"
-                    sys.stdout.write(task[1].statistics(task_name, return_str=True))
+            for i in range(4):
+                task_name = f"GigaSpeech-ASR-test-ls{i:02d}"
+                sys.stdout.write(r.statistics(task_name, return_str=True))
             sys.stdout.flush()
 
             time.sleep(10)
@@ -273,3 +302,21 @@ if __name__ == "__main__":
     #         task_name = f"LibriSpeech-ASR-{subset}-ls{ls:02d}"
     #         r.initialize_tasks(task_name, libri[subset])
     # 2: test-clean, 3: test-other
+
+    # ===== initialize GigaSpeech ASR tasks - LoRA Scaling TEST =====
+    # r = SalmonnRedis(host="192.168.219.101", db=5)
+    # gis = []
+    # for i in range(3):
+    #     gi = pd.read_csv(
+    #         f"repr_exp/table3/GigaSpeech/test_chunks_000{i}_metadata.csv", sep=","
+    #     )
+    #     # https://github.com/SpeechColab/GigaSpeech?tab=readme-ov-file#text-pre-processing
+    #     # will be addressed after inference using under
+    #     # https://github.com/SpeechColab/GigaSpeech/blob/main/utils/gigaspeech_scoring.py
+    #     gi = gi.rename(columns={"sid": "file_name", "text_tn": "sentence"})
+    #     gis += gi[["file_name", "sentence"]].to_dict(orient="records")
+    #     # print(gi)
+
+    # for ls in range(0, 4):
+    #     task_name = f"GigaSpeech-ASR-test-ls{ls:02d}"
+    #     r.initialize_tasks(task_name, gis)

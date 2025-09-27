@@ -155,18 +155,27 @@ def eval_gigaspeech_asr(data: dict):
 # r = SalmonnRedis(host="192.168.219.101", db=5)
 # r.start_worker("GigaSpeech-ASR-test", device, eval_gigaspeech_asr)
 
+# if gpu_devices in ["0", "1", "2", "3"]:
+#     ls = int(gpu_devices)
+#     r = SalmonnRedis(host="192.168.219.101", db=2)
+#     r.start_worker(
+#         f"LibriSpeech-ASR-test-clean-ls{ls:02d}",
+#         device,
+#         eval_librispeech_asr,
+#     )
+
+#     r = SalmonnRedis(host="192.168.219.101", db=3)
+#     r.start_worker(
+#         f"LibriSpeech-ASR-test-other-ls{ls:02d}",
+#         device,
+#         eval_librispeech_asr,
+#     )
+
 if gpu_devices in ["0", "1", "2", "3"]:
     ls = int(gpu_devices)
-    r = SalmonnRedis(host="192.168.219.101", db=2)
+    r = SalmonnRedis(host="192.168.219.101", db=5)
     r.start_worker(
-        f"LibriSpeech-ASR-test-clean-ls{ls:02d}",
+        f"GigaSpeech-ASR-test-ls{ls:02d}",
         device,
-        eval_librispeech_asr,
-    )
-
-    r = SalmonnRedis(host="192.168.219.101", db=3)
-    r.start_worker(
-        f"LibriSpeech-ASR-test-other-ls{ls:02d}",
-        device,
-        eval_librispeech_asr,
+        eval_gigaspeech_asr,
     )
