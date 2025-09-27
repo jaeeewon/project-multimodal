@@ -53,26 +53,31 @@ for key in datas:
 
 # print(aac_datasets.AudioCaps(download_path, download=True))
 
-audiocaps = load_dataset(
-    "OpenSound/AudioCaps",
-    cache_dir="./hf",
-)
+# audiocaps = load_dataset(
+#     "OpenSound/AudioCaps",
+#     cache_dir="./hf",
+# )
 
-target_set = "train"
-output_dir = f"./dataset/AudioCaps/{target_set}"
-os.makedirs(output_dir, exist_ok=True)
+# target_set = "test"
+# output_dir = f"./dataset/AudioCaps/{target_set}"
+# os.makedirs(output_dir, exist_ok=True)
 
-for item in tqdm(audiocaps[target_set], desc="extracting AudioCaps set"):
-    sampling_rate = item["audio"]["sampling_rate"]
-    audio_data = librosa.resample(
-        y=item["audio"]["array"], orig_sr=sampling_rate, target_sr=16000
-    )
-    filename = f"{item['youtube_id']}.wav"
-    output_path = os.path.join(output_dir, filename)
+# for item in tqdm(audiocaps[target_set], desc="extracting AudioCaps set"):
+#     sampling_rate = item["audio"]["sampling_rate"]
+#     audio_data = librosa.resample(
+#         y=item["audio"]["array"], orig_sr=sampling_rate, target_sr=16000
+#     )
+#     filename = f"{item['youtube_id']}.wav"
+#     output_path = os.path.join(output_dir, filename)
 
-    sf.write(output_path, audio_data, sampling_rate)
+#     sf.write(output_path, audio_data, sampling_rate)
 
-print(f"extracted {len(audiocaps[target_set])} sounds of AudioCaps {target_set}")
+# print(f"extracted {len(audiocaps[target_set])} sounds of AudioCaps {target_set}")
+
+# meta_path = f"repr_exp/table3/AudioCaps/{target_set}.csv"
+# audiocaps[target_set] = audiocaps[target_set].select_columns(["youtube_id", "caption"])
+# audiocaps[target_set].to_csv(meta_path)
+# print(f"stored audiocaps {target_set} to {meta_path}")
 
 # ===== end of AudioCaps =====
 

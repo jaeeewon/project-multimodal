@@ -29,13 +29,13 @@ def get_utils(device: str):
         "device": device,
     }
 
-    if gpu_devices in ["0", "1", "2", "3"]:
-        sync_gpu_to_lora = (
-            input("sync gpu id to lora scaling? (Y/N) > ").strip().lower()
-        )
-        if sync_gpu_to_lora in ["y", "yes"]:
-            args["lora_scaling"] = int(gpu_devices)
-            print(f"[warning] sync lora_scaling to gpu: {args['lora_scaling']}")
+    # if gpu_devices in ["0", "1", "2", "3"]:
+    #     sync_gpu_to_lora = (
+    #         input("sync gpu id to lora scaling? (Y/N) > ").strip().lower()
+    #     )
+    #     if sync_gpu_to_lora in ["y", "yes"]:
+    #         args["lora_scaling"] = int(gpu_devices)
+    #         print(f"[warning] sync lora_scaling to gpu: {args['lora_scaling']}")
 
     return (
         Inference(**args),
@@ -137,6 +137,24 @@ def eval_gigaspeech_asr(data: dict):
     return result
 
 
+def eval_audiocaps_aac(data: dict):
+    print(f"evaluating {data['youtube_id']}...")
+    path = "dataset/AudioCaps/test/" + data["youtube_id"] + ".wav"
+    prompt = "Please describe the audio."
+
+    reference = data["caption"]
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    _reference = remove_puncs(reference)
+    _result = remove_puncs(result)
+
+    print(f"ref: {_reference}")
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return result
+
+
 # r = SalmonnRedis(host="192.168.219.101", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -171,11 +189,14 @@ def eval_gigaspeech_asr(data: dict):
 #         eval_librispeech_asr,
 #     )
 
-if gpu_devices in ["0", "1", "2", "3"]:
-    ls = int(gpu_devices)
-    r = SalmonnRedis(host="192.168.219.101", db=5)
-    r.start_worker(
-        f"GigaSpeech-ASR-test-ls{ls:02d}",
-        device,
-        eval_gigaspeech_asr,
-    )
+# if gpu_devices in ["0", "1", "2", "3"]:
+#     ls = int(gpu_devices)
+#     r = SalmonnRedis(host="192.168.219.101", db=5)
+#     r.start_worker(
+#         f"GigaSpeech-ASR-test-ls{ls:02d}",
+#         device,
+#         eval_gigaspeech_asr,
+#     )
+
+r = SalmonnRedis(host="192.168.219.101", db=6)
+r.start_worker("AudioCaps-AAC-test", device, eval_audiocaps_aac)
