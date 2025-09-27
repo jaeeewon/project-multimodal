@@ -1,6 +1,7 @@
 import redis
 import uuid
 import os
+import sys
 import time
 from typing import Callable, Any
 from collections import Counter
@@ -63,7 +64,10 @@ class SalmonnRedis:
         PROCESSING_QUEUE = self.PROCESSING_QUEUE.format(task_name)
         TASK_HASH_PREFIX = self.TASK_HASH_PREFIX.format(task_name)
 
-        while True:
+        while (
+            self.client.llen(PENDING_QUEUE) > 0
+            or self.client.llen(PROCESSING_QUEUE) > 0
+        ):
             task_id = None
             try:
                 # pending -> processing
@@ -81,11 +85,21 @@ class SalmonnRedis:
 
             except Exception as e:
                 self.client.hset(task_key, "status", "failed")
+                self.client.lpush(PENDING_QUEUE, task_id)
                 self.client.lrem(PROCESSING_QUEUE, 1, task_id)
                 log(f"'{task_id}' failed and removed.")
                 log(f"err: {str(e)}")
 
-    def statistics(self, task_name: str, overwrite=False):
+    def statistics(self, task_name: str, overwrite=False, return_str=False):
+        rtn_str = ""
+
+        def print_or_store(msg):
+            nonlocal rtn_str
+            if return_str:
+                rtn_str += msg + "\n"
+            else:
+                print(msg)
+
         TASK_HASH_PREFIX = self.TASK_HASH_PREFIX.format(task_name)
         passkeys = [
             self.PENDING_QUEUE.format(task_name),
@@ -100,7 +114,7 @@ class SalmonnRedis:
         total_tasks = len(task_keys)
 
         if total_tasks == 0:
-            print("no data")
+            print_or_store("no data")
             return
 
         status_counts = Counter()
@@ -125,16 +139,19 @@ class SalmonnRedis:
 
         title = f"===== Statistics of {task_name} task ====="
 
-        print(title)
-        print(f"total: {total_tasks}")
+        print_or_store(title)
+        print_or_store(f"total: {total_tasks}")
 
         for status, count in status_counts.items():
-            print(f"- {status}: {count} tasks ({count/total_tasks:.2%})")
-        print("=" * len(title))
+            print_or_store(f"- {status}: {count} tasks ({count/total_tasks:.2%})")
+        print_or_store("=" * len(title))
+
+        if return_str:
+            return rtn_str
 
 
 if __name__ == "__main__":
-    pass
+    """"""
     # ===== monitor multiple tasks =====
     # tasks = [
     #     "en2ja",
@@ -151,6 +168,41 @@ if __name__ == "__main__":
     #     for task in tasks:
     #         task[1].statistics(task[0])
     #     time.sleep(10)
+
+    # ===== monitor lora-scaled tasks =====
+    ENTER_ALT_SCREEN = "\x1b[?1049h"
+    EXIT_ALT_SCREEN = "\x1b[?1049l"
+    CLEAR_SCREEN = "\x1b[2J"
+    CURSOR_HOME = "\x1b[H"
+
+    tasks = [
+        "LibriSpeech-ASR-test-clean",
+        "LibriSpeech-ASR-test-other",
+    ]
+    for i, task in enumerate(tasks):
+        tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i + 2)
+
+    try:
+        sys.stdout.write(ENTER_ALT_SCREEN)
+
+        while True:
+            sys.stdout.write(CLEAR_SCREEN)
+            sys.stdout.write(CURSOR_HOME)
+
+            sys.stdout.write(f"monitor LoRA-scaled ASR tasks\n\n")
+            for task in tasks:
+                for i in range(4):
+                    task_name = f"{task[0]}-ls{i:02d}"
+                    sys.stdout.write(task[1].statistics(task_name, return_str=True))
+            sys.stdout.flush()
+
+            time.sleep(10)
+
+    except KeyboardInterrupt:
+        pass
+
+    finally:
+        sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor status =====
     # r = SalmonnRedis(host="192.168.219.101", db=1)
@@ -210,3 +262,14 @@ if __name__ == "__main__":
     #     gis += gi[["file_name", "sentence"]].to_dict(orient="records")
     #     # print(gi)
     # r.initialize_tasks("GigaSpeech-ASR-test", gis)
+
+    # ===== initialize LibriSpeech ASR tasks - LoRA Scaling TEST =====
+    # from librispeech import get_librispeech_list
+
+    # libri = get_librispeech_list()
+    # for i, subset in enumerate(libri):
+    #     r = SalmonnRedis(host="192.168.219.101", db=i + 2)
+    #     for ls in range(0, 4):
+    #         task_name = f"LibriSpeech-ASR-{subset}-ls{ls:02d}"
+    #         r.initialize_tasks(task_name, libri[subset])
+    # 2: test-clean, 3: test-other

@@ -25,8 +25,12 @@ from salmonn.utils import prepare_one_sample
 
 
 class Inference:
-    def __init__(self, config_path: str, device: str):
+    def __init__(self, config_path: str, device: str, lora_scaling=4):
         self.config = OmegaConf.load(config_path)
+        self.config.model["lora_alpha"] = lora_scaling * self.config.model["lora_rank"]
+        print(
+            f"set lora_alpha to {self.config.model.lora_alpha} | lora_scaling: {lora_scaling}"
+        )
         self.model = SALMONN.from_config(self.config.model)
         self.model.to(device=device)
         self.model.eval()

@@ -1,7 +1,11 @@
 # CUDA_VISIBLE_DEVICES=1 python dist_eval/works.py
 
+import os
 from init_works import SalmonnRedis
 
+gpu_devices = (
+    os.environ["CUDA_VISIBLE_DEVICES"] if "CUDA_VISIBLE_DEVICES" in os.environ else None
+)
 device = "cuda:0"
 
 
@@ -20,8 +24,21 @@ def get_utils(device: str):
     from util.bleu import bleu4_score
     from util.str import remove_puncs
 
+    args = {
+        "config_path": "configs/infer_config.yaml",
+        "device": device,
+    }
+
+    if gpu_devices in ["0", "1", "2", "3"]:
+        sync_gpu_to_lora = (
+            input("sync gpu id to lora scaling? (Y/N) > ").strip().lower()
+        )
+        if sync_gpu_to_lora in ["y", "yes"]:
+            args["lora_scaling"] = int(gpu_devices)
+            print(f"[warning] sync lora_scaling to gpu: {args['lora_scaling']}")
+
     return (
-        Inference(config_path="configs/infer_config.yaml", device=device),
+        Inference(**args),
         bleu4_score,
         remove_puncs,
     )
@@ -135,5 +152,21 @@ def eval_gigaspeech_asr(data: dict):
 # r = SalmonnRedis(host="192.168.219.101", db=4) # cuda:3
 # r.start_worker("en2zh", device, eval_en2zh)
 
-r = SalmonnRedis(host="192.168.219.101", db=5)
-r.start_worker("GigaSpeech-ASR-test", device, eval_gigaspeech_asr)
+# r = SalmonnRedis(host="192.168.219.101", db=5)
+# r.start_worker("GigaSpeech-ASR-test", device, eval_gigaspeech_asr)
+
+if gpu_devices in ["0", "1", "2", "3"]:
+    ls = int(gpu_devices)
+    r = SalmonnRedis(host="192.168.219.101", db=2)
+    r.start_worker(
+        f"LibriSpeech-ASR-test-clean-ls{ls:02d}",
+        device,
+        eval_librispeech_asr,
+    )
+
+    r = SalmonnRedis(host="192.168.219.101", db=3)
+    r.start_worker(
+        f"LibriSpeech-ASR-test-other-ls{ls:02d}",
+        device,
+        eval_librispeech_asr,
+    )
