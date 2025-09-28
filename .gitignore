@@ -6,3 +6,4 @@ __pycache__/
 .secret
 *.tsv
 *.csv
+LS_testclean_pr.json

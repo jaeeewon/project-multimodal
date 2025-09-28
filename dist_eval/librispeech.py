@@ -1,4 +1,4 @@
-import os
+import os, json
 
 libri_path = "/home/jpong/Workspace/jaeeewon/LibriSpeech"
 
@@ -24,6 +24,14 @@ def get_librispeech_list():
                                 answer = splt[1]
                                 ds[set].append({"path": filename, "sentence": answer})
     return ds
+
+
+def get_librispeech_pr():
+    # ensure you have repr_exp/table3/LibriSpeech/LS_testclean_pr.json
+    with open("repr_exp/table3/LibriSpeech/LS_testclean_pr.json", "r") as anns_f:
+        anns = json.load(anns_f)["annotation"]
+
+    return anns
 
 
 if __name__ == "__main__":

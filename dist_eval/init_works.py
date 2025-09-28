@@ -205,33 +205,33 @@ if __name__ == "__main__":
     #     sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor lora-scaled gigaspeech asr tasks =====
-    ENTER_ALT_SCREEN = "\x1b[?1049h"
-    EXIT_ALT_SCREEN = "\x1b[?1049l"
-    CLEAR_SCREEN = "\x1b[2J"
-    CURSOR_HOME = "\x1b[H"
+    # ENTER_ALT_SCREEN = "\x1b[?1049h"
+    # EXIT_ALT_SCREEN = "\x1b[?1049l"
+    # CLEAR_SCREEN = "\x1b[2J"
+    # CURSOR_HOME = "\x1b[H"
 
-    r = SalmonnRedis(host="192.168.219.101", db=5)
+    # r = SalmonnRedis(host="192.168.219.101", db=5)
 
-    try:
-        sys.stdout.write(ENTER_ALT_SCREEN)
+    # try:
+    #     sys.stdout.write(ENTER_ALT_SCREEN)
 
-        while True:
-            sys.stdout.write(CLEAR_SCREEN)
-            sys.stdout.write(CURSOR_HOME)
+    #     while True:
+    #         sys.stdout.write(CLEAR_SCREEN)
+    #         sys.stdout.write(CURSOR_HOME)
 
-            sys.stdout.write(f"monitor LoRA-scaled ASR tasks\n\n")
-            for i in range(4):
-                task_name = f"GigaSpeech-ASR-test-ls{i:02d}"
-                sys.stdout.write(r.statistics(task_name, return_str=True))
-            sys.stdout.flush()
+    #         sys.stdout.write(f"monitor LoRA-scaled ASR tasks\n\n")
+    #         for i in range(4):
+    #             task_name = f"GigaSpeech-ASR-test-ls{i:02d}"
+    #             sys.stdout.write(r.statistics(task_name, return_str=True))
+    #         sys.stdout.flush()
 
-            time.sleep(10)
+    #         time.sleep(10)
 
-    except KeyboardInterrupt:
-        pass
+    # except KeyboardInterrupt:
+    #     pass
 
-    finally:
-        sys.stdout.write(EXIT_ALT_SCREEN)
+    # finally:
+    #     sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor status =====
     # r = SalmonnRedis(host="192.168.219.101", db=1)
@@ -332,3 +332,13 @@ if __name__ == "__main__":
     # # print(ac)
     # r = SalmonnRedis(host="192.168.219.101", db=6)
     # r.initialize_tasks("AudioCaps-AAC-test", ac)
+
+    # ===== initialize LibriSpeech PR tasks =====
+    from librispeech import get_librispeech_pr
+
+    ds = "test-clean"
+    libri = get_librispeech_pr()
+    task_name = f"LibriSpeech-PR-{ds}"
+    r = SalmonnRedis(host="192.168.219.101", db=2)
+    r.initialize_tasks(task_name, libri)
+    # 2: test-clean, 3: test-other
