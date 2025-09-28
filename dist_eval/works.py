@@ -237,6 +237,25 @@ def eval_librispeech_pr(data: dict):
 # r = SalmonnRedis(host="192.168.219.101", db=6)
 # r.start_worker("AudioCaps-AAC-test", device, eval_audiocaps_aac)
 
-inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
-r = SalmonnRedis(host="192.168.219.101", db=2)
-r.start_worker("LibriSpeech-PR-test-clean", device, eval_librispeech_pr)
+# inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# r = SalmonnRedis(host="192.168.219.101", db=2)
+# r.start_worker("LibriSpeech-PR-test-clean", device, eval_librispeech_pr)
+
+if gpu_devices in ["0", "1", "2", "3"]:
+    ls = int(gpu_devices)
+    for i in range(ls, ls + 4):
+        i %= 4
+        worker_name = f"LibriSpeech-PR-test-clean-ls{i:02d}"
+        r = SalmonnRedis(host="192.168.219.101", db=2)
+        print(f"===== start {worker_name} =====")
+        print(f"load model with lora scaling {i}")
+        if inference is not None:
+            del inference
+        inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=i)
+        r.start_worker(
+            worker_name,
+            device,
+            eval_librispeech_pr,
+        )
+        r.statistics(worker_name)
+        print(f"===== end {worker_name} =====")

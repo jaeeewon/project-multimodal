@@ -233,11 +233,41 @@ if __name__ == "__main__":
     # finally:
     #     sys.stdout.write(EXIT_ALT_SCREEN)
 
+    # ===== monitor lora-scaled librispeech pr tasks =====
+    ENTER_ALT_SCREEN = "\x1b[?1049h"
+    EXIT_ALT_SCREEN = "\x1b[?1049l"
+    CLEAR_SCREEN = "\x1b[2J"
+    CURSOR_HOME = "\x1b[H"
+
+    r = SalmonnRedis(host="192.168.219.101", db=2)
+    task = "LibriSpeech-PR-test-clean"
+
+    try:
+        sys.stdout.write(ENTER_ALT_SCREEN)
+
+        while True:
+            sys.stdout.write(CLEAR_SCREEN)
+            sys.stdout.write(CURSOR_HOME)
+
+            sys.stdout.write(f"monitor LoRA-scaled PR tasks\n\n")
+            for i in range(5):
+                task_name = task if i == 4 else f"{task}-ls{i:02d}"
+                sys.stdout.write(r.statistics(task_name, return_str=True))
+            sys.stdout.flush()
+
+            time.sleep(10)
+
+    except KeyboardInterrupt:
+        pass
+
+    finally:
+        sys.stdout.write(EXIT_ALT_SCREEN)
+
     # ===== monitor status =====
-    # r = SalmonnRedis(host="192.168.219.101", db=1)
+    # r = SalmonnRedis(host="192.168.219.101", db=2)
     # while True:
-    #     r.statistics("en2de")
-    #     time.sleep(5)
+    #     r.statistics("LibriSpeech-PR-test-clean")
+    #     time.sleep(10)    
 
     # ===== initialize CoVoST2 tasks =====
     # ts = pd.read_csv("repr_exp/table3/CoVoST2/tr/test.tsv", sep="\t")
@@ -334,11 +364,22 @@ if __name__ == "__main__":
     # r.initialize_tasks("AudioCaps-AAC-test", ac)
 
     # ===== initialize LibriSpeech PR tasks =====
-    from librispeech import get_librispeech_pr
+    # from librispeech import get_librispeech_pr
 
-    ds = "test-clean"
-    libri = get_librispeech_pr()
-    task_name = f"LibriSpeech-PR-{ds}"
-    r = SalmonnRedis(host="192.168.219.101", db=2)
-    r.initialize_tasks(task_name, libri)
+    # ds = "test-clean"
+    # libri = get_librispeech_pr()
+    # task_name = f"LibriSpeech-PR-{ds}"
+    # r = SalmonnRedis(host="192.168.219.101", db=2)
+    # r.initialize_tasks(task_name, libri)
     # 2: test-clean, 3: test-other
+
+    # ===== initialize LibriSpeech PR tasks - LoRA Scaling TEST =====
+    # from librispeech import get_librispeech_pr
+
+    # ds = "test-clean"
+    # libri = get_librispeech_pr()
+    # task_name = f"LibriSpeech-PR-{ds}"
+    # r = SalmonnRedis(host="192.168.219.101", db=2)
+    # for ls in range(0, 4):
+    #     task_name = f"LibriSpeech-PR-{ds}-ls{ls:02d}"
+    #     r.initialize_tasks(task_name, libri)
