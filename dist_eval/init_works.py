@@ -6,6 +6,7 @@ import time
 from typing import Callable, Any
 from collections import Counter
 import pandas as pd
+import torch
 
 
 class SalmonnRedis:
@@ -55,19 +56,16 @@ class SalmonnRedis:
         device: str,
         fn: Callable[[dict[str, Any]], dict[str, Any]],
     ):
-        worker_id = (
-            f"worker-{os.getpid()}-{os.environ.get('CUDA_VISIBLE_DEVICES', device)}"
-        )
+        device_id = os.environ.get("CUDA_VISIBLE_DEVICES", device)
+        device_name = torch.cuda.get_device_name()
+        worker_id = f"worker-{os.getpid()}-{device_name}-{device_id}"
         log = lambda msg: print(f"[{worker_id}] {msg}")
 
         PENDING_QUEUE = self.PENDING_QUEUE.format(task_name)
         PROCESSING_QUEUE = self.PROCESSING_QUEUE.format(task_name)
         TASK_HASH_PREFIX = self.TASK_HASH_PREFIX.format(task_name)
 
-        while (
-            self.client.llen(PENDING_QUEUE) > 0
-            or self.client.llen(PROCESSING_QUEUE) > 0
-        ):
+        while self.client.llen(PENDING_QUEUE) > 0:
             task_id = None
             try:
                 # pending -> processing
@@ -154,22 +152,22 @@ class SalmonnRedis:
 if __name__ == "__main__":
     """"""
     # ===== monitor multiple tasks =====
-    tasks = [
-        "en2ja",
-        "en2de",
-        "LibriSpeech-ASR-test-clean",
-        "LibriSpeech-ASR-test-other",
-        "en2zh",
-        "GigaSpeech-ASR-test",
-        "AudioCaps-AAC-test",
-    ]
-    for i, task in enumerate(tasks):
-        tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i)
+    # tasks = [
+    #     "en2ja",
+    #     "en2de",
+    #     "LibriSpeech-ASR-test-clean",
+    #     "LibriSpeech-ASR-test-other",
+    #     "en2zh",
+    #     "GigaSpeech-ASR-test",
+    #     "AudioCaps-AAC-test",
+    # ]
+    # for i, task in enumerate(tasks):
+    #     tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i)
 
-    while True:
-        for task in tasks[6:]:
-            task[1].statistics(task[0])
-        time.sleep(10)
+    # while True:
+    #     for task in tasks:
+    #         task[1].statistics(task[0])
+    #     time.sleep(10)
 
     # ===== monitor lora-scaled librispeech asr tasks =====
     # ENTER_ALT_SCREEN = "\x1b[?1049h"
@@ -207,33 +205,33 @@ if __name__ == "__main__":
     #     sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor lora-scaled gigaspeech asr tasks =====
-    # ENTER_ALT_SCREEN = "\x1b[?1049h"
-    # EXIT_ALT_SCREEN = "\x1b[?1049l"
-    # CLEAR_SCREEN = "\x1b[2J"
-    # CURSOR_HOME = "\x1b[H"
+    ENTER_ALT_SCREEN = "\x1b[?1049h"
+    EXIT_ALT_SCREEN = "\x1b[?1049l"
+    CLEAR_SCREEN = "\x1b[2J"
+    CURSOR_HOME = "\x1b[H"
 
-    # r = SalmonnRedis(host="192.168.219.101", db=5)
+    r = SalmonnRedis(host="192.168.219.101", db=5)
 
-    # try:
-    #     sys.stdout.write(ENTER_ALT_SCREEN)
+    try:
+        sys.stdout.write(ENTER_ALT_SCREEN)
 
-    #     while True:
-    #         sys.stdout.write(CLEAR_SCREEN)
-    #         sys.stdout.write(CURSOR_HOME)
+        while True:
+            sys.stdout.write(CLEAR_SCREEN)
+            sys.stdout.write(CURSOR_HOME)
 
-    #         sys.stdout.write(f"monitor LoRA-scaled ASR tasks\n\n")
-    #         for i in range(4):
-    #             task_name = f"GigaSpeech-ASR-test-ls{i:02d}"
-    #             sys.stdout.write(r.statistics(task_name, return_str=True))
-    #         sys.stdout.flush()
+            sys.stdout.write(f"monitor LoRA-scaled ASR tasks\n\n")
+            for i in range(4):
+                task_name = f"GigaSpeech-ASR-test-ls{i:02d}"
+                sys.stdout.write(r.statistics(task_name, return_str=True))
+            sys.stdout.flush()
 
-    #         time.sleep(10)
+            time.sleep(10)
 
-    # except KeyboardInterrupt:
-    #     pass
+    except KeyboardInterrupt:
+        pass
 
-    # finally:
-    #     sys.stdout.write(EXIT_ALT_SCREEN)
+    finally:
+        sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor status =====
     # r = SalmonnRedis(host="192.168.219.101", db=1)

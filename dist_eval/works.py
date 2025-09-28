@@ -9,7 +9,7 @@ gpu_devices = (
 device = "cuda:0"
 
 
-def get_utils(device: str):
+def get_utils(device: str, lora_scaling: int = None):
     import sys
     import os
 
@@ -29,6 +29,10 @@ def get_utils(device: str):
         "device": device,
     }
 
+    if lora_scaling in [0, 1, 2, 3]:
+        args["lora_scaling"] = lora_scaling
+        print(f"set lora_scaling: {args['lora_scaling']}")
+
     # if gpu_devices in ["0", "1", "2", "3"]:
     #     sync_gpu_to_lora = (
     #         input("sync gpu id to lora scaling? (Y/N) > ").strip().lower()
@@ -44,7 +48,7 @@ def get_utils(device: str):
     )
 
 
-inference, bleu4_score, remove_puncs = get_utils(device)
+inference, bleu4_score, remove_puncs = None, None, None  # get_utils(device)
 
 
 def eval_en2ja(data: dict):
@@ -193,14 +197,24 @@ def eval_audiocaps_aac(data: dict):
 #         eval_librispeech_asr,
 #     )
 
-# if gpu_devices in ["0", "1", "2", "3"]:
-#     ls = int(gpu_devices)
-#     r = SalmonnRedis(host="192.168.219.101", db=5)
-#     r.start_worker(
-#         f"GigaSpeech-ASR-test-ls{ls:02d}",
-#         device,
-#         eval_gigaspeech_asr,
-#     )
+if gpu_devices in ["0", "1", "2", "3"]:
+    ls = int(gpu_devices)
+    for i in range(ls, ls + 4):
+        i %= 4
+        worker_name = f"GigaSpeech-ASR-test-ls{i:02d}"
+        r = SalmonnRedis(host="192.168.219.101", db=5)
+        print(f"===== start {worker_name} =====")
+        print(f"load model with lora scaling {i}")
+        if inference is not None:
+            del inference
+        inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=i)
+        r.start_worker(
+            worker_name,
+            device,
+            eval_gigaspeech_asr,
+        )
+        r.statistics(worker_name)
+        print(f"===== end {worker_name} =====")
 
-r = SalmonnRedis(host="192.168.219.101", db=6)
-r.start_worker("AudioCaps-AAC-test", device, eval_audiocaps_aac)
+# r = SalmonnRedis(host="192.168.219.101", db=6)
+# r.start_worker("AudioCaps-AAC-test", device, eval_audiocaps_aac)
