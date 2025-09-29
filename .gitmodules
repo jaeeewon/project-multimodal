@@ -2,3 +2,6 @@
 	path = salmonn
 	url = https://github.com/jaeeewon/SALMONN.git
 	branch = salmonn
+[submodule "sakura"]
+	path = sakura
+	url = https://github.com/ckyang1124/SAKURA

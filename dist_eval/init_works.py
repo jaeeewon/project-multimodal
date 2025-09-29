@@ -263,11 +263,41 @@ if __name__ == "__main__":
     # finally:
     #     sys.stdout.write(EXIT_ALT_SCREEN)
 
+    # ===== monitor SAKURA tasks =====
+    ENTER_ALT_SCREEN = "\x1b[?1049h"
+    EXIT_ALT_SCREEN = "\x1b[?1049l"
+    CLEAR_SCREEN = "\x1b[2J"
+    CURSOR_HOME = "\x1b[H"
+
+    r = SalmonnRedis(host="192.168.219.101", db=7)
+
+    try:
+        sys.stdout.write(ENTER_ALT_SCREEN)
+
+        while True:
+            sys.stdout.write(CLEAR_SCREEN)
+            sys.stdout.write(CURSOR_HOME)
+
+            sys.stdout.write(f"monitor SAKURA tasks\n\n")
+            for i in ["Animal", "Emotion", "Gender", "Language"]:
+                for hop in ["single", "multi"]:
+                    task_name = f"SAKURA-{i}-{hop}"
+                    sys.stdout.write(r.statistics(task_name, return_str=True))
+            sys.stdout.flush()
+
+            time.sleep(10)
+
+    except KeyboardInterrupt:
+        pass
+
+    finally:
+        sys.stdout.write(EXIT_ALT_SCREEN)
+
     # ===== monitor status =====
-    r = SalmonnRedis(host="192.168.219.101", db=6)
-    while True:
-        r.statistics("AudioCaps-Story-test")
-        time.sleep(10)    
+    # r = SalmonnRedis(host="192.168.219.101", db=6)
+    # while True:
+    #     r.statistics("AudioCaps-Story-test")
+    #     time.sleep(10)
 
     # ===== initialize CoVoST2 tasks =====
     # ts = pd.read_csv("repr_exp/table3/CoVoST2/tr/test.tsv", sep="\t")
@@ -395,3 +425,28 @@ if __name__ == "__main__":
     # # print(ac)
     # r = SalmonnRedis(host="192.168.219.101", db=6)
     # r.initialize_tasks("AudioCaps-Story-test", ac)
+
+    # ===== initialize SAKURA tasks =====
+    # r = SalmonnRedis(host="192.168.219.101", db=7)
+    # for track in ["Animal", "Emotion", "Gender", "Language"]:
+    #     ds = f"SAKURA-{track}"
+    #     track_path = f"sakura/data/{track}"
+    #     skr = pd.read_csv(
+    #         f"{track_path}/metadata.csv",
+    #         sep=",",
+    #     )
+
+    #     for hop in ["single", "multi"]:
+    #         skr2 = skr.rename(
+    #             columns={f"{hop}_instruction": "instruction", f"{hop}_answer": "answer"}
+    #         )
+    #         skr2 = skr2[["file", "attribute_label", "instruction", "answer"]]
+    #         skr2 = skr2.to_dict(
+    #             orient="records"
+    #         )
+
+    #         for i in range(len(skr2)):
+    #             skr2[i]["track"] = track
+    #             skr2[i]["file"] = f"{track_path}/audio/{skr2[i]['file']}"
+
+    #         r.initialize_tasks(f"{ds}-{hop}", skr2)

@@ -197,6 +197,24 @@ def eval_librispeech_pr(data: dict):
     return {"infer": result}
 
 
+def eval_sakura(data: dict):
+    print(f"evaluating {data['file']}...")
+    path = data["file"]
+    prompt = data["instruction"]
+
+    reference = data["answer"]
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    _reference = remove_puncs(reference)
+    _result = remove_puncs(result)
+
+    print(f"ref: {_reference}")
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return {"infer": result}
+
+
 # r = SalmonnRedis(host="192.168.219.101", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -276,6 +294,30 @@ def eval_librispeech_pr(data: dict):
 #         r.statistics(worker_name)
 #         print(f"===== end {worker_name} =====")
 
-inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
-r = SalmonnRedis(host="192.168.219.101", db=6)
-r.start_worker("AudioCaps-Story-test", device, eval_audiocaps_story)
+# inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# r = SalmonnRedis(host="192.168.219.101", db=6)
+# r.start_worker("AudioCaps-Story-test", device, eval_audiocaps_story)
+
+
+if inference is not None:
+    del inference
+
+inference, bleu4_score, remove_puncs = get_utils(device)
+
+r = SalmonnRedis(host="192.168.219.101", db=7)
+sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
+if gpu_devices in ["0", "1", "2", "3"]:
+    ls = int(gpu_devices)
+    for i in range(ls, ls + 4):
+        i %= 4
+        track = sakura_tracks[i]
+        for hop in ["single", "multi"]:
+            worker_name = f"SAKURA-{track}-{hop}"
+            print(f"===== start {worker_name} =====")
+            r.start_worker(
+                worker_name,
+                device,
+                eval_sakura,
+            )
+            r.statistics(worker_name)
+            print(f"===== end {worker_name} =====")
