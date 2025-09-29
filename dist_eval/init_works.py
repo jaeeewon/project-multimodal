@@ -234,40 +234,40 @@ if __name__ == "__main__":
     #     sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor lora-scaled librispeech pr tasks =====
-    ENTER_ALT_SCREEN = "\x1b[?1049h"
-    EXIT_ALT_SCREEN = "\x1b[?1049l"
-    CLEAR_SCREEN = "\x1b[2J"
-    CURSOR_HOME = "\x1b[H"
+    # ENTER_ALT_SCREEN = "\x1b[?1049h"
+    # EXIT_ALT_SCREEN = "\x1b[?1049l"
+    # CLEAR_SCREEN = "\x1b[2J"
+    # CURSOR_HOME = "\x1b[H"
 
-    r = SalmonnRedis(host="192.168.219.101", db=2)
-    task = "LibriSpeech-PR-test-clean"
+    # r = SalmonnRedis(host="192.168.219.101", db=2)
+    # task = "LibriSpeech-PR-test-clean"
 
-    try:
-        sys.stdout.write(ENTER_ALT_SCREEN)
+    # try:
+    #     sys.stdout.write(ENTER_ALT_SCREEN)
 
-        while True:
-            sys.stdout.write(CLEAR_SCREEN)
-            sys.stdout.write(CURSOR_HOME)
+    #     while True:
+    #         sys.stdout.write(CLEAR_SCREEN)
+    #         sys.stdout.write(CURSOR_HOME)
 
-            sys.stdout.write(f"monitor LoRA-scaled PR tasks\n\n")
-            for i in range(5):
-                task_name = task if i == 4 else f"{task}-ls{i:02d}"
-                sys.stdout.write(r.statistics(task_name, return_str=True))
-            sys.stdout.flush()
+    #         sys.stdout.write(f"monitor LoRA-scaled PR tasks\n\n")
+    #         for i in range(5):
+    #             task_name = task if i == 4 else f"{task}-ls{i:02d}"
+    #             sys.stdout.write(r.statistics(task_name, return_str=True))
+    #         sys.stdout.flush()
 
-            time.sleep(10)
+    #         time.sleep(10)
 
-    except KeyboardInterrupt:
-        pass
+    # except KeyboardInterrupt:
+    #     pass
 
-    finally:
-        sys.stdout.write(EXIT_ALT_SCREEN)
+    # finally:
+    #     sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor status =====
-    # r = SalmonnRedis(host="192.168.219.101", db=2)
-    # while True:
-    #     r.statistics("LibriSpeech-PR-test-clean")
-    #     time.sleep(10)    
+    r = SalmonnRedis(host="192.168.219.101", db=6)
+    while True:
+        r.statistics("AudioCaps-Story-test")
+        time.sleep(10)    
 
     # ===== initialize CoVoST2 tasks =====
     # ts = pd.read_csv("repr_exp/table3/CoVoST2/tr/test.tsv", sep="\t")
@@ -383,3 +383,15 @@ if __name__ == "__main__":
     # for ls in range(0, 4):
     #     task_name = f"LibriSpeech-PR-{ds}-ls{ls:02d}"
     #     r.initialize_tasks(task_name, libri)
+
+    # ===== initialize AudioCaps Story tasks =====
+    # original dataset located under
+    # "https://raw.githubusercontent.com/cdjkim/audiocaps/master/dataset/test.csv"
+    # ac = pd.read_csv(
+    #     "repr_exp/table3/AudioCaps/test.csv",
+    #     sep=",",
+    # )
+    # ac = ac.to_dict(orient="records")
+    # # print(ac)
+    # r = SalmonnRedis(host="192.168.219.101", db=6)
+    # r.initialize_tasks("AudioCaps-Story-test", ac)

@@ -163,6 +163,22 @@ def eval_audiocaps_aac(data: dict):
     return {"infer": result, "infer_v2": result_v2}
 
 
+def eval_audiocaps_story(data: dict):
+    print(f"evaluating {data['youtube_id']}...")
+    path = "dataset/AudioCaps/test/" + data["youtube_id"] + ".wav"
+    prompt = "Based on the audio, write a story in detail. Your story should be highly related to the audio."
+
+    reference = data["caption"]
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    _result = remove_puncs(result)
+
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return {"infer": result}
+
+
 def eval_librispeech_pr(data: dict):
     print(f"evaluating {data['path']}...")
     path = f"/home/jpong/Workspace/jaeeewon/{data['path']}"
@@ -241,21 +257,25 @@ def eval_librispeech_pr(data: dict):
 # r = SalmonnRedis(host="192.168.219.101", db=2)
 # r.start_worker("LibriSpeech-PR-test-clean", device, eval_librispeech_pr)
 
-if gpu_devices in ["0", "1", "2", "3"]:
-    ls = int(gpu_devices)
-    for i in range(ls, ls + 4):
-        i %= 4
-        worker_name = f"LibriSpeech-PR-test-clean-ls{i:02d}"
-        r = SalmonnRedis(host="192.168.219.101", db=2)
-        print(f"===== start {worker_name} =====")
-        print(f"load model with lora scaling {i}")
-        if inference is not None:
-            del inference
-        inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=i)
-        r.start_worker(
-            worker_name,
-            device,
-            eval_librispeech_pr,
-        )
-        r.statistics(worker_name)
-        print(f"===== end {worker_name} =====")
+# if gpu_devices in ["0", "1", "2", "3"]:
+#     ls = int(gpu_devices)
+#     for i in range(ls, ls + 4):
+#         i %= 4
+#         worker_name = f"LibriSpeech-PR-test-clean-ls{i:02d}"
+#         r = SalmonnRedis(host="192.168.219.101", db=2)
+#         print(f"===== start {worker_name} =====")
+#         print(f"load model with lora scaling {i}")
+#         if inference is not None:
+#             del inference
+#         inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=i)
+#         r.start_worker(
+#             worker_name,
+#             device,
+#             eval_librispeech_pr,
+#         )
+#         r.statistics(worker_name)
+#         print(f"===== end {worker_name} =====")
+
+inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+r = SalmonnRedis(host="192.168.219.101", db=6)
+r.start_worker("AudioCaps-Story-test", device, eval_audiocaps_story)
