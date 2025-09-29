@@ -43,8 +43,8 @@ def printer(key, answer, infer, type):
 
 redis_dbs = [
     ("LibriSpeech-ASR-test-clean", 2),
-    ("LibriSpeech-ASR-test-other", 3),
-    ("GigaSpeech-ASR-test", 5),
+    # ("LibriSpeech-ASR-test-other", 3),
+    # ("GigaSpeech-ASR-test", 5),
 ]
 
 skip = True
