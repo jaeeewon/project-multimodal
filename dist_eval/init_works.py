@@ -7,6 +7,7 @@ from typing import Callable, Any
 from collections import Counter
 import pandas as pd
 import torch
+import traceback
 
 
 class SalmonnRedis:
@@ -55,14 +56,15 @@ class SalmonnRedis:
         task_name: str,
         device: str,
         fn: Callable[[dict[str, Any]], dict[str, Any]],
+        pf="",
     ):
         device_id = os.environ.get("CUDA_VISIBLE_DEVICES", device)
         device_name = torch.cuda.get_device_name()
         worker_id = f"worker-{os.getpid()}-{device_name}-{device_id}"
         log = lambda msg: print(f"[{worker_id}] {msg}")
 
-        PENDING_QUEUE = self.PENDING_QUEUE.format(task_name)
-        PROCESSING_QUEUE = self.PROCESSING_QUEUE.format(task_name)
+        PENDING_QUEUE = self.PENDING_QUEUE.format(task_name) + pf
+        PROCESSING_QUEUE = self.PROCESSING_QUEUE.format(task_name) + pf
         TASK_HASH_PREFIX = self.TASK_HASH_PREFIX.format(task_name)
 
         while self.client.llen(PENDING_QUEUE) > 0:
@@ -74,20 +76,21 @@ class SalmonnRedis:
                 )
 
                 task_key = f"{TASK_HASH_PREFIX}{task_id}"
-                self.client.hset(task_key, "status", f"'{worker_id}' processing...")
+                self.client.hset(task_key, "status", f"'{worker_id}'{pf} processing...")
                 task_data = self.client.hgetall(task_key)
                 out = fn(task_data)
                 for k, v in out.items():
                     self.client.hset(task_key, k, v)
-                self.client.hset(task_key, "status", "completed")
+                self.client.hset(task_key, "status", "completed" + pf)
                 self.client.lrem(PROCESSING_QUEUE, 1, task_id)
 
             except Exception as e:
-                self.client.hset(task_key, "status", "failed")
+                self.client.hset(task_key, "status", "failed" + pf)
                 self.client.lpush(PENDING_QUEUE, task_id)
                 self.client.lrem(PROCESSING_QUEUE, 1, task_id)
                 log(f"'{task_id}' failed and removed.")
-                log(f"err: {str(e)}")
+                log(f"err: {repr(e)} | {traceback.format_exc()}")
+                raise e
 
     def statistics(self, task_name: str, overwrite=False, return_str=False):
         rtn_str = ""
@@ -108,7 +111,7 @@ class SalmonnRedis:
         task_keys = [
             k
             for k in self.client.scan_iter(f"{TASK_HASH_PREFIX}*")
-            if k not in passkeys
+            if not k.startswith(tuple(passkeys))
         ]
         total_tasks = len(task_keys)
 
@@ -124,12 +127,15 @@ class SalmonnRedis:
 
             status = task_data.get("status")
 
-            if overwrite and (status == "failed" or "worker" in status):
-                self.client.hset(key, "status", "initialized")
+            if overwrite and (
+                status == "failed" or "worker" in status or "failed-" in status
+            ):
+                status = "initialized" if "failed-" not in status else "completed"
+                self.client.hset(key, "status", status)
                 task_id = task_data.get("id")
                 PENDING_QUEUE = self.PENDING_QUEUE.format(task_name)
-                self.client.lpush(PENDING_QUEUE, task_id)
-                status = "initialized"
+                if status != "completed":
+                    self.client.lpush(PENDING_QUEUE, task_id)
 
             status_counts[status] += 1
 

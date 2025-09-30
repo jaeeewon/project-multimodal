@@ -1,7 +1,8 @@
 # CUDA_VISIBLE_DEVICES=1 python dist_eval/works.py
 
-import os
+import os, re
 from init_works import SalmonnRedis
+from qwen3 import qwen3_api
 
 gpu_devices = (
     os.environ["CUDA_VISIBLE_DEVICES"] if "CUDA_VISIBLE_DEVICES" in os.environ else None
@@ -215,6 +216,47 @@ def eval_sakura(data: dict):
     return {"infer": result}
 
 
+def eval_sakura_judge(data: dict):
+    print(f"judging {data['file']}...")
+
+    question = data["instruction"]
+    response = data["infer"]
+    ground_truth_answer = data["answer"]
+    user_prompt = (
+        user_prompt_template.replace("[QUESTION]", question)
+        .replace("[MODEL_GENERATED_RESPONSE]", response)
+        .replace("[GROUND_TRUTH_ANSWER]", ground_truth_answer)
+    )
+
+    judgement = qwen3_api(user_prompt, system_prompt=system_prompt)
+
+    # ===== extract_judgement@llm_judge.py =====
+    pattern = r"Explanation: (.*?)\nJudgement: (.*?)(?:\n\n|$)"
+    match = re.search(pattern, judgement, re.DOTALL)
+
+    if match:
+        explanation = match.group(1)
+        judgement = match.group(2)
+    else:
+        explanation = "No extracted explanation"
+        judgement = "No extracted judgement"
+
+    results = {
+        "Explanation" + sakura_judge_pf: explanation,
+        "Judgement" + sakura_judge_pf: judgement,
+    }
+    # ===== extract_judgement@llm_judge.py =====
+
+    if judgement != "correct":
+        print(f"answer: {ground_truth_answer}")
+        print(f"model response: {response}")
+        print(f"Explanation: {explanation}")
+    print(f"Judgement: {judgement}")
+    print("=" * 20)
+
+    return results
+
+
 # r = SalmonnRedis(host="192.168.219.101", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -299,25 +341,104 @@ def eval_sakura(data: dict):
 # r.start_worker("AudioCaps-Story-test", device, eval_audiocaps_story)
 
 
-if inference is not None:
-    del inference
+# if inference is not None:
+#     del inference
 
-inference, bleu4_score, remove_puncs = get_utils(device)
+# inference, bleu4_score, remove_puncs = get_utils(device)
+
+# r = SalmonnRedis(host="192.168.219.101", db=7)
+# sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
+# if gpu_devices in ["0", "1", "2", "3"]:
+#     ls = int(gpu_devices)
+#     for i in range(ls, ls + 4):
+#         i %= 4
+#         track = sakura_tracks[i]
+#         for hop in ["single", "multi"]:
+#             worker_name = f"SAKURA-{track}-{hop}"
+#             print(f"===== start {worker_name} =====")
+#             r.start_worker(
+#                 worker_name,
+#                 device,
+#                 eval_sakura,
+#             )
+#             r.statistics(worker_name)
+#             print(f"===== end {worker_name} =====")
 
 r = SalmonnRedis(host="192.168.219.101", db=7)
+user_prompt_template = """
+    You will be given a question with list of possible options, a ground truth answer and a model generated response. Determine whether the model generated response is correct based on the following criteria:
+    1. Since there is one and only one corect answer, it should be judged incorrect if the model do not choose any option from the option list or it choose more than one option.
+    2. If the model choose one option from the option list, it should be judged correct if the chosen option aligns with the ground truth answer, otherwise it should be judged incorrect.
+    3. Read the question, options, ground truth answer and model generated response carefully before making a decision.
+
+    Considering the following examples:
+    Question: What is the capital of France? (a) Paris (b) London (c) Berlin (d) Madrid
+    Ground truth answer: (a) Paris
+    If the model generated response is: "The capital of France is Tokyo.", it should be judged incorrect since it does not choose any option from the option list.
+    If the model generated response is: "The capital of France is Paris and London.", it should be judged incorrect since it chooses more than one option from the option list.
+    If the model generated response is: "The capital of France is London.", it should be judged incorrect since it chooses one option from the option list but the chosen option does not align with the ground truth answer.
+    If the model generated response is: "The capital of France is Paris.", it should be judged correct since it chooses one option from the option list and the chosen option aligns with the ground truth answer.
+    Another Question: What is the underlying emotion of the speaker? (a) Happy (b) Sad (c) Angry (d) Neutral
+    Ground truth answer: (a) Happy
+    If the model generated response is: "The speaker is happy.", it should be judged correct since it chooses one option from the option list and the chosen option aligns with the ground truth answer.
+    If the model generated response is: "The speaker expresses happiness.", it should be judged correct since "happiness" aligns with the ground truth answer "happy", and they are just different part of speech of the same word.
+    If the model generated response is: "Happiness," it should be judged correct since it is also a valid derivative of the ground truth answer "happy".
+    
+    Now here is the question and the model generated response for you to judge:
+    Question: [QUESTION]
+    Ground truth answer: [GROUND_TRUTH_ANSWER]
+    Model generated response: [MODEL_GENERATED_RESPONSE]
+
+    Carefully make your decision based on the above criteria. Return your judgement with the following format:
+    Explanation: <Your explanation on your judgement>
+    Judgement: <Your judgement, either "correct" or "incorrect">
+    """
+system_prompt = """You are a good judge. You will be given a question with list of possible options, a ground truth answer and a model generated response. 
+#                     You have to determine whether the model generated answer is correct."""
 sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
-if gpu_devices in ["0", "1", "2", "3"]:
-    ls = int(gpu_devices)
-    for i in range(ls, ls + 4):
-        i %= 4
-        track = sakura_tracks[i]
+sakura_judge_pf = "-judge-qwen3"
+
+# ===== init SAKURA judge tasks =====
+if gpu_devices == "0": # prevent multiple tasks init
+    for track in sakura_tracks:
         for hop in ["single", "multi"]:
-            worker_name = f"SAKURA-{track}-{hop}"
-            print(f"===== start {worker_name} =====")
-            r.start_worker(
-                worker_name,
-                device,
-                eval_sakura,
-            )
-            r.statistics(worker_name)
-            print(f"===== end {worker_name} =====")
+            task_name = f"SAKURA-{track}-{hop}"
+            TASK_HASH_PREFIX = SalmonnRedis.TASK_HASH_PREFIX.format(task_name)
+            passkeys = [
+                SalmonnRedis.PENDING_QUEUE.format(task_name),
+                SalmonnRedis.PROCESSING_QUEUE.format(task_name),
+                SalmonnRedis.PENDING_QUEUE.format(task_name) + sakura_judge_pf,
+                SalmonnRedis.PROCESSING_QUEUE.format(task_name) + sakura_judge_pf,
+            ]
+
+            task_keys = [
+                k
+                for k in r.client.scan_iter(f"{TASK_HASH_PREFIX}*")
+                if not k.startswith(tuple(passkeys))
+            ]
+
+            for key in task_keys:
+                task_data = r.client.hgetall(key)
+
+                status = task_data.get("status")
+
+                if "worker" not in status and status == "completed":
+                    task_id = task_data.get("id")
+                    PENDING_QUEUE = (
+                        SalmonnRedis.PENDING_QUEUE.format(task_name) + sakura_judge_pf
+                    )
+
+                    judge_key = f"Judgement{sakura_judge_pf}"
+                    if judge_key in task_data and task_data[judge_key] in [
+                        "correct",
+                        "incorrect",
+                    ]:
+                        continue
+                    r.client.lpush(PENDING_QUEUE, task_id)
+
+# ===== start SAKURA judge workers =====
+for track in sakura_tracks:
+    for hop in ["single", "multi"]:
+        task_name = f"SAKURA-{track}-{hop}"
+        print(f"===== start {task_name} =====")
+        r.start_worker(task_name, device, eval_sakura_judge, pf=sakura_judge_pf)
