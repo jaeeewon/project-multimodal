@@ -23,10 +23,22 @@ from salmonn.utils import prepare_one_sample
 
 # </remote_import>
 
+salmonn_cfg = {
+    "ckpt": "/home/jpong/Workspace/jaeeewon/SALMONN-7B/salmonn_7b_v0.pth",
+    "llama_path": "/home/jpong/Workspace/jaeeewon/vicuna-7b-v1.5",
+    "low_resource": False,
+}
+
 
 class Inference:
-    def __init__(self, config_path: str, device: str, lora_scaling=4):
+    def __init__(self, config_path: str, device: str, lora_scaling=4, use_7B=False):
         self.config = OmegaConf.load(config_path)
+        if use_7B:
+            self.config.model.ckpt = salmonn_cfg["ckpt"]
+            self.config.model.llama_path = salmonn_cfg["llama_path"]
+            self.config.model.low_resource = salmonn_cfg["low_resource"]
+            # unset 8bit quantization for 7B model
+            print(f"set use 7B model")
         self.config.model["lora_alpha"] = lora_scaling * self.config.model["lora_rank"]
         print(
             f"set lora_alpha to {self.config.model.lora_alpha} | lora_scaling: {lora_scaling}"

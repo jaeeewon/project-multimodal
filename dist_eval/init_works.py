@@ -287,7 +287,7 @@ if __name__ == "__main__":
             sys.stdout.write(f"monitor SAKURA tasks\n\n")
             for i in ["Animal", "Emotion", "Gender", "Language"]:
                 for hop in ["single", "multi"]:
-                    task_name = f"SAKURA-{i}-{hop}"
+                    task_name = f"SAKURA-{i}-{hop}-7B"
                     sys.stdout.write(r.statistics(task_name, return_str=True))
             sys.stdout.flush()
 
@@ -447,12 +447,11 @@ if __name__ == "__main__":
     #             columns={f"{hop}_instruction": "instruction", f"{hop}_answer": "answer"}
     #         )
     #         skr2 = skr2[["file", "attribute_label", "instruction", "answer"]]
-    #         skr2 = skr2.to_dict(
-    #             orient="records"
-    #         )
+    #         skr2 = skr2.to_dict(orient="records")
 
     #         for i in range(len(skr2)):
     #             skr2[i]["track"] = track
     #             skr2[i]["file"] = f"{track_path}/audio/{skr2[i]['file']}"
 
-    #         r.initialize_tasks(f"{ds}-{hop}", skr2)
+    #         for pf in ["", "-7B"]:
+    #             r.initialize_tasks(f"{ds}-{hop}{pf}", skr2)
