@@ -168,7 +168,7 @@ if __name__ == "__main__":
     #     "AudioCaps-AAC-test",
     # ]
     # for i, task in enumerate(tasks):
-    #     tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i)
+    #     tasks[i] = task, SalmonnRedis(host="salmonn.hufs.jae.one", db=i)
 
     # while True:
     #     for task in tasks:
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     #     "LibriSpeech-ASR-test-other",
     # ]
     # for i, task in enumerate(tasks):
-    #     tasks[i] = task, SalmonnRedis(host="192.168.219.101", db=i + 2)
+    #     tasks[i] = task, SalmonnRedis(host="salmonn.hufs.jae.one", db=i + 2)
 
     # try:
     #     sys.stdout.write(ENTER_ALT_SCREEN)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     # CLEAR_SCREEN = "\x1b[2J"
     # CURSOR_HOME = "\x1b[H"
 
-    # r = SalmonnRedis(host="192.168.219.101", db=5)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=5)
 
     # try:
     #     sys.stdout.write(ENTER_ALT_SCREEN)
@@ -245,7 +245,7 @@ if __name__ == "__main__":
     # CLEAR_SCREEN = "\x1b[2J"
     # CURSOR_HOME = "\x1b[H"
 
-    # r = SalmonnRedis(host="192.168.219.101", db=2)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=2)
     # task = "LibriSpeech-PR-test-clean"
 
     # try:
@@ -275,7 +275,7 @@ if __name__ == "__main__":
     CLEAR_SCREEN = "\x1b[2J"
     CURSOR_HOME = "\x1b[H"
 
-    r = SalmonnRedis(host="192.168.219.101", db=7)
+    r = SalmonnRedis(host="salmonn.hufs.jae.one", db=7)
 
     try:
         sys.stdout.write(ENTER_ALT_SCREEN)
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor status =====
-    # r = SalmonnRedis(host="192.168.219.101", db=6)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=6)
     # while True:
     #     r.statistics("AudioCaps-Story-test")
     #     time.sleep(10)
@@ -316,14 +316,14 @@ if __name__ == "__main__":
     # ja = pd.read_csv("repr_exp/table3/CoVoST2/tr/covost_v2.en_ja.tsv", sep="\t")
     # ja = ja[ja["split"] == "test"].to_dict(orient="records")
     # # print(ja)
-    # r = SalmonnRedis(host="192.168.219.101", db=0)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=0)
     # r.initialize_tasks("en2ja", ja)
 
     # ===== initialize en2de tasks =====
     # de = pd.read_csv("repr_exp/table3/CoVoST2/tr/covost_v2.en_de.tsv", sep="\t")
     # de = de[de["split"] == "test"].to_dict(orient="records")
     # # print(ja)
-    # r = SalmonnRedis(host="192.168.219.101", db=1)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=1)
     # r.initialize_tasks("en2de", de)
 
     # ===== initialize LibriSpeech ASR tasks =====
@@ -332,7 +332,7 @@ if __name__ == "__main__":
     # libri = get_librispeech_list()
     # for i, subset in enumerate(libri):
     #     task_name = f"LibriSpeech-ASR-{subset}"
-    #     r = SalmonnRedis(host="192.168.219.101", db=i + 2)
+    #     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=i + 2)
     #     r.initialize_tasks(task_name, libri[subset])
     # 2: test-clean, 3: test-other
 
@@ -340,11 +340,11 @@ if __name__ == "__main__":
     # de = pd.read_csv("repr_exp/table3/CoVoST2/tr/covost_v2.en_zh-CN.tsv", sep="\t")
     # de = de[de["split"] == "test"].to_dict(orient="records")
     # # print(ja)
-    # r = SalmonnRedis(host="192.168.219.101", db=4)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=4)
     # r.initialize_tasks("en2zh", de)
 
     # ===== initialize GigaSpeech ASR tasks =====
-    # r = SalmonnRedis(host="192.168.219.101", db=5)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=5)
     # gis = []
     # for i in range(3):
     #     gi = pd.read_csv(
@@ -363,14 +363,14 @@ if __name__ == "__main__":
 
     # libri = get_librispeech_list()
     # for i, subset in enumerate(libri):
-    #     r = SalmonnRedis(host="192.168.219.101", db=i + 2)
+    #     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=i + 2)
     #     for ls in range(0, 4):
     #         task_name = f"LibriSpeech-ASR-{subset}-ls{ls:02d}"
     #         r.initialize_tasks(task_name, libri[subset])
     # 2: test-clean, 3: test-other
 
     # ===== initialize GigaSpeech ASR tasks - LoRA Scaling TEST =====
-    # r = SalmonnRedis(host="192.168.219.101", db=5)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=5)
     # gis = []
     # for i in range(3):
     #     gi = pd.read_csv(
@@ -396,7 +396,7 @@ if __name__ == "__main__":
     # )
     # ac = ac.to_dict(orient="records")
     # # print(ac)
-    # r = SalmonnRedis(host="192.168.219.101", db=6)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=6)
     # r.initialize_tasks("AudioCaps-AAC-test", ac)
 
     # ===== initialize LibriSpeech PR tasks =====
@@ -405,7 +405,7 @@ if __name__ == "__main__":
     # ds = "test-clean"
     # libri = get_librispeech_pr()
     # task_name = f"LibriSpeech-PR-{ds}"
-    # r = SalmonnRedis(host="192.168.219.101", db=2)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=2)
     # r.initialize_tasks(task_name, libri)
     # 2: test-clean, 3: test-other
 
@@ -415,7 +415,7 @@ if __name__ == "__main__":
     # ds = "test-clean"
     # libri = get_librispeech_pr()
     # task_name = f"LibriSpeech-PR-{ds}"
-    # r = SalmonnRedis(host="192.168.219.101", db=2)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=2)
     # for ls in range(0, 4):
     #     task_name = f"LibriSpeech-PR-{ds}-ls{ls:02d}"
     #     r.initialize_tasks(task_name, libri)
@@ -429,11 +429,11 @@ if __name__ == "__main__":
     # )
     # ac = ac.to_dict(orient="records")
     # # print(ac)
-    # r = SalmonnRedis(host="192.168.219.101", db=6)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=6)
     # r.initialize_tasks("AudioCaps-Story-test", ac)
 
     # ===== initialize SAKURA tasks =====
-    # r = SalmonnRedis(host="192.168.219.101", db=7)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=7)
     # for track in ["Animal", "Emotion", "Gender", "Language"]:
     #     ds = f"SAKURA-{track}"
     #     track_path = f"sakura/data/{track}"

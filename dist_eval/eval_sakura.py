@@ -3,7 +3,7 @@ from collections import Counter
 import pandas as pd
 import numpy as np
 
-r = SalmonnRedis(host="192.168.219.101", db=7)
+r = SalmonnRedis(host="salmonn.hufs.jae.one", db=7)
 sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
 sakura_judge_pf = "-judge-qwen3"
 

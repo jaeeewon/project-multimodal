@@ -258,34 +258,34 @@ def eval_sakura_judge(data: dict):
     return results
 
 
-# r = SalmonnRedis(host="192.168.219.101", db=0)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
-# r = SalmonnRedis(host="192.168.219.101", db=1)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=1)
 # r.start_worker("en2de", device, eval_en2de)
 
-# r = SalmonnRedis(host="192.168.219.101", db=2) # cuda:0
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=2) # cuda:0
 # r.start_worker("LibriSpeech-ASR-test-clean", device, eval_librispeech_asr)
 
-# r = SalmonnRedis(host="192.168.219.101", db=3) # cuda:2
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=3) # cuda:2
 # r.start_worker("LibriSpeech-ASR-test-other", device, eval_librispeech_asr)
 
-# r = SalmonnRedis(host="192.168.219.101", db=4) # cuda:3
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=4) # cuda:3
 # r.start_worker("en2zh", device, eval_en2zh)
 
-# r = SalmonnRedis(host="192.168.219.101", db=5)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=5)
 # r.start_worker("GigaSpeech-ASR-test", device, eval_gigaspeech_asr)
 
 # if gpu_devices in ["0", "1", "2", "3"]:
 #     ls = int(gpu_devices)
-#     r = SalmonnRedis(host="192.168.219.101", db=2)
+#     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=2)
 #     r.start_worker(
 #         f"LibriSpeech-ASR-test-clean-ls{ls:02d}",
 #         device,
 #         eval_librispeech_asr,
 #     )
 
-#     r = SalmonnRedis(host="192.168.219.101", db=3)
+#     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=3)
 #     r.start_worker(
 #         f"LibriSpeech-ASR-test-other-ls{ls:02d}",
 #         device,
@@ -297,7 +297,7 @@ def eval_sakura_judge(data: dict):
 #     for i in range(ls, ls + 4):
 #         i %= 4
 #         worker_name = f"GigaSpeech-ASR-test-ls{i:02d}"
-#         r = SalmonnRedis(host="192.168.219.101", db=5)
+#         r = SalmonnRedis(host="salmonn.hufs.jae.one", db=5)
 #         print(f"===== start {worker_name} =====")
 #         print(f"load model with lora scaling {i}")
 #         if inference is not None:
@@ -311,11 +311,11 @@ def eval_sakura_judge(data: dict):
 #         r.statistics(worker_name)
 #         print(f"===== end {worker_name} =====")
 
-# r = SalmonnRedis(host="192.168.219.101", db=6)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=6)
 # r.start_worker("AudioCaps-AAC-test", device, eval_audiocaps_aac)
 
 # inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
-# r = SalmonnRedis(host="192.168.219.101", db=2)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=2)
 # r.start_worker("LibriSpeech-PR-test-clean", device, eval_librispeech_pr)
 
 # if gpu_devices in ["0", "1", "2", "3"]:
@@ -323,7 +323,7 @@ def eval_sakura_judge(data: dict):
 #     for i in range(ls, ls + 4):
 #         i %= 4
 #         worker_name = f"LibriSpeech-PR-test-clean-ls{i:02d}"
-#         r = SalmonnRedis(host="192.168.219.101", db=2)
+#         r = SalmonnRedis(host="salmonn.hufs.jae.one", db=2)
 #         print(f"===== start {worker_name} =====")
 #         print(f"load model with lora scaling {i}")
 #         if inference is not None:
@@ -338,14 +338,14 @@ def eval_sakura_judge(data: dict):
 #         print(f"===== end {worker_name} =====")
 
 # inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
-# r = SalmonnRedis(host="192.168.219.101", db=6)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=6)
 # r.start_worker("AudioCaps-Story-test", device, eval_audiocaps_story)
 
 
 # if inference is not None:
 #     del inference
 
-# r = SalmonnRedis(host="192.168.219.101", db=7)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=7)
 # sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
 # if gpu_devices in ["0", "1", "2", "3"]:
 #     ls = int(gpu_devices)
@@ -370,7 +370,7 @@ def eval_sakura_judge(data: dict):
 #                 r.statistics(worker_name)
 #                 print(f"===== end {worker_name} =====")
 
-# r = SalmonnRedis(host="192.168.219.101", db=7)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=7)
 # user_prompt_template = """
 #     You will be given a question with list of possible options, a ground truth answer and a model generated response. Determine whether the model generated response is correct based on the following criteria:
 #     1. Since there is one and only one corect answer, it should be judged incorrect if the model do not choose any option from the option list or it choose more than one option.

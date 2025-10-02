@@ -24,7 +24,7 @@ def qwen3_api(
 
     try:
         response = requests.post(
-            "http://192.168.219.101:8080/v1/chat/completions",
+            "http://salmonn.hufs.jae.one:8080/v1/chat/completions",
             headers=headers,
             data=json.dumps(payload),
         )

@@ -59,7 +59,7 @@ missed_eos = 0
 empty_answer = 0
 
 for task, db in redis_dbs:
-    r = redis.Redis(host="192.168.219.101", port=6379, db=db, decode_responses=True)
+    r = redis.Redis(host="salmonn.hufs.jae.one", port=6379, db=db, decode_responses=True)
     for i in range(5):
         curr_missed_eos = 0
         curr_empty_answer = 0

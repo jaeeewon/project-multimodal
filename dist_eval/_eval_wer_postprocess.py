@@ -8,7 +8,7 @@ PENDING_QUEUE = "task_{}:pending"
 PROCESSING_QUEUE = "task_{}:processing"
 TASK_HASH_PREFIX = "task_{}:"
 
-r = redis.Redis(host="192.168.219.101", port=6379, db=3, decode_responses=True)
+r = redis.Redis(host="salmonn.hufs.jae.one", port=6379, db=3, decode_responses=True)
 
 print_types = [
     # "valid"
