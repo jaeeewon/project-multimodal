@@ -302,7 +302,7 @@ if __name__ == "__main__":
     # ===== monitor status =====
     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     while True:
-        r.statistics("IEMOCAP-ER")
+        r.statistics("MusicCaps-MC")
         time.sleep(10)
 
     # ===== initialize CoVoST2 tasks =====
@@ -463,3 +463,11 @@ if __name__ == "__main__":
     # task_name = "IEMOCAP-ER"
     # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     # r.initialize_tasks(task_name, iemo)
+
+    # ===== initialize MusicCaps MC tasks =====
+    # from musiccaps import get_musiccaps_mc
+
+    # music = get_musiccaps_mc()
+    # task_name = "MusicCaps-MC"
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    # r.initialize_tasks(task_name, music)

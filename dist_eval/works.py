@@ -276,6 +276,24 @@ def eval_iemocap_er(data: dict):
     return {"infer": result}
 
 
+def eval_musiccaps_mc(data: dict):
+    print(f"evaluating {data['path']}...")
+    path = data["path"]
+    prompt = "Listen to this music clip and describe the music."
+
+    reference = data["caption"]
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    _reference = remove_puncs(reference)
+    _result = remove_puncs(result)
+
+    print(f"ref: {_reference}")
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return {"infer": result}
+
+
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -470,6 +488,10 @@ def eval_iemocap_er(data: dict):
 #             print(f"===== start {task_name} =====")
 #             r.start_worker(task_name, device, eval_sakura_judge, pf=sakura_judge_pf)
 
+# inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+# r.start_worker("IEMOCAP-ER", device, eval_iemocap_er)
+
 inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
 r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-r.start_worker("IEMOCAP-ER", device, eval_iemocap_er)
+r.start_worker("MusicCaps-MC", device, eval_musiccaps_mc)
