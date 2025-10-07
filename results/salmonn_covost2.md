@@ -25,3 +25,13 @@ EOS 스킵
 EOS 미스킵
 - BLEU4: 20.28
 - skipped: 0 / 15531
+
+# en2zh - 33.1
+
+EOS 스킵
+- BLEU4: 35.36
+- skipped: 58 / 15531
+
+EOS 미스킵
+- BLEU4: 35.20
+- skipped: 0 / 15531
