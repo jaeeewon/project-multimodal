@@ -302,7 +302,7 @@ if __name__ == "__main__":
     # ===== monitor status =====
     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     while True:
-        r.statistics("MusicCaps-MC")
+        r.statistics("VoxCeleb1-SV")
         time.sleep(10)
 
     # ===== initialize CoVoST2 tasks =====
@@ -471,3 +471,11 @@ if __name__ == "__main__":
     # task_name = "MusicCaps-MC"
     # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     # r.initialize_tasks(task_name, music)
+
+    # ===== initialize VoxCeleb1 SV tasks =====
+    # from voxceleb1 import get_voxceleb1_sv
+
+    # vc1 = get_voxceleb1_sv()
+    # task_name = "VoxCeleb1-SV"
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    # r.initialize_tasks(task_name, vc1)
