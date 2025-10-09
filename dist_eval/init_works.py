@@ -299,12 +299,6 @@ if __name__ == "__main__":
     # finally:
     #     sys.stdout.write(EXIT_ALT_SCREEN)
 
-    # ===== monitor status =====
-    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-    # while True:
-    #     r.statistics("Inspec-KE")
-    #     time.sleep(10)
-
     # ===== initialize CoVoST2 tasks =====
     # ts = pd.read_csv("repr_exp/table3/CoVoST2/tr/test.tsv", sep="\t")
     # print(ts)
@@ -481,9 +475,23 @@ if __name__ == "__main__":
     # r.initialize_tasks(task_name, vc1)
 
     # ===== initialize Inspec KE tasks =====
-    from inspec import get_inspec_ke
+    # from inspec import get_inspec_ke
 
-    inspec = get_inspec_ke()
-    task_name = "Inspec-KE"
+    # inspec = get_inspec_ke()
+    # task_name = "Inspec-KE"
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    # r.initialize_tasks(task_name, inspec)
+
+    # ===== initialize WikiQA SQQA tasks =====
+    # from wiki_qa import get_wikiqa_sqqa
+
+    # wq = get_wikiqa_sqqa()
+    # task_name = "WikiQA-SQQA"
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    # r.initialize_tasks(task_name, wq)
+
+    # ===== monitor status =====
     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-    r.initialize_tasks(task_name, inspec)
+    while True:
+        r.statistics("WikiQA-SQQA")
+        time.sleep(10)
