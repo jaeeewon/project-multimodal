@@ -300,10 +300,10 @@ if __name__ == "__main__":
     #     sys.stdout.write(EXIT_ALT_SCREEN)
 
     # ===== monitor status =====
-    r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-    while True:
-        r.statistics("VoxCeleb1-SV")
-        time.sleep(10)
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    # while True:
+    #     r.statistics("Inspec-KE")
+    #     time.sleep(10)
 
     # ===== initialize CoVoST2 tasks =====
     # ts = pd.read_csv("repr_exp/table3/CoVoST2/tr/test.tsv", sep="\t")
@@ -479,3 +479,11 @@ if __name__ == "__main__":
     # task_name = "VoxCeleb1-SV"
     # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     # r.initialize_tasks(task_name, vc1)
+
+    # ===== initialize Inspec KE tasks =====
+    from inspec import get_inspec_ke
+
+    inspec = get_inspec_ke()
+    task_name = "Inspec-KE"
+    r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    r.initialize_tasks(task_name, inspec)

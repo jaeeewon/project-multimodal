@@ -309,6 +309,21 @@ def eval_voxceleb1_sv(data: dict):
     return {"infer": result}
 
 
+def eval_inspec_ke(data: dict):
+    print(f"evaluating {data['path']}...")
+    path = data["path"]
+    prompt = "Give me only three keywords of the text."
+
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    _result = remove_puncs(result)
+
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return {"infer": result}
+
+
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -511,6 +526,10 @@ def eval_voxceleb1_sv(data: dict):
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
 # r.start_worker("MusicCaps-MC", device, eval_musiccaps_mc)
 
+# inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+# r.start_worker("VoxCeleb1-SV", device, eval_voxceleb1_sv)
+
 inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
 r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-r.start_worker("VoxCeleb1-SV", device, eval_voxceleb1_sv)
+r.start_worker("Inspec-KE", device, eval_inspec_ke)
