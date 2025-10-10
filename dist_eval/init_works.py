@@ -490,8 +490,16 @@ if __name__ == "__main__":
     # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     # r.initialize_tasks(task_name, wq)
 
+    # ===== initialize Slurp SF tasks =====
+    # from slurp import get_slurp_sf
+
+    # slps = get_slurp_sf()
+    # task_name = "Slurp-SF"
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    # r.initialize_tasks(task_name, slps)
+
     # ===== monitor status =====
     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     while True:
-        r.statistics("WikiQA-SQQA")
+        r.statistics("Slurp-SF")
         time.sleep(10)

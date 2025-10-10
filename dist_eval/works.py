@@ -3,6 +3,7 @@
 import os, re
 from init_works import SalmonnRedis
 from qwen3 import qwen3_api
+from tqdm import tqdm
 
 gpu_devices = (
     os.environ["CUDA_VISIBLE_DEVICES"] if "CUDA_VISIBLE_DEVICES" in os.environ else None
@@ -339,6 +340,26 @@ def eval_wikiqa_sqqa(data: dict):
     return {"infer": result}
 
 
+def eval_slurp_sf(data: dict):
+    print(f"evaluating {data['path']}...")
+    path = data["path"]
+    infer = []
+    spl = data["slots"].strip().split("; ")
+    for i, slot in enumerate(spl):
+        splt = slot.strip().split("=")
+        assert len(splt) == 2, f"invalid slot: {slot}"
+
+        prompt = "According to the speech, what is the {}?".format(splt[0])
+        result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+        _result = remove_puncs(result)
+        infer.append(f"{splt[0]}={result}")
+        print(f"{i+1}/{len(spl)} [{splt[0]}] | ans: {splt[1]} | res: {_result}")
+
+    print("=" * 20)
+
+    return {"infer": "; ".join(infer)}
+
+
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -470,7 +491,7 @@ def eval_wikiqa_sqqa(data: dict):
 #     If the model generated response is: "The speaker is happy.", it should be judged correct since it chooses one option from the option list and the chosen option aligns with the ground truth answer.
 #     If the model generated response is: "The speaker expresses happiness.", it should be judged correct since "happiness" aligns with the ground truth answer "happy", and they are just different part of speech of the same word.
 #     If the model generated response is: "Happiness," it should be judged correct since it is also a valid derivative of the ground truth answer "happy".
-    
+
 #     Now here is the question and the model generated response for you to judge:
 #     Question: [QUESTION]
 #     Ground truth answer: [GROUND_TRUTH_ANSWER]
@@ -480,7 +501,7 @@ def eval_wikiqa_sqqa(data: dict):
 #     Explanation: <Your explanation on your judgement>
 #     Judgement: <Your judgement, either "correct" or "incorrect">
 #     """
-# system_prompt = """You are a good judge. You will be given a question with list of possible options, a ground truth answer and a model generated response. 
+# system_prompt = """You are a good judge. You will be given a question with list of possible options, a ground truth answer and a model generated response.
 # #                     You have to determine whether the model generated answer is correct."""
 # sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
 # sakura_judge_pf = "-judge-qwen3"
@@ -549,6 +570,10 @@ def eval_wikiqa_sqqa(data: dict):
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
 # r.start_worker("Inspec-KE", device, eval_inspec_ke)
 
+# inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+# r.start_worker("WikiQA-SQQA", device, eval_wikiqa_sqqa)
+
 inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
 r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-r.start_worker("WikiQA-SQQA", device, eval_wikiqa_sqqa)
+r.start_worker("Slurp-SF", device, eval_slurp_sf)
