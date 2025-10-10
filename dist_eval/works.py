@@ -360,6 +360,25 @@ def eval_slurp_sf(data: dict):
     return {"infer": "; ".join(infer)}
 
 
+def eval_librimix_osr(data: dict):
+    print(f"evaluating {data['path']}...")
+    path = data["path"]
+    prompt = "Please write down what you hear each person says."
+
+    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+
+    a1, a2 = data["ans1"], data["ans2"]
+    _a1, _a2 = remove_puncs(a1), remove_puncs(a2)
+    _result = remove_puncs(result)
+
+    print(f"ans1: {_a1}")
+    print(f"ans2: {_a2}")
+    print(f"res: {_result}")
+    print("=" * 20)
+
+    return {"infer": result}
+
+
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -574,6 +593,10 @@ def eval_slurp_sf(data: dict):
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
 # r.start_worker("WikiQA-SQQA", device, eval_wikiqa_sqqa)
 
+# inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+# r.start_worker("Slurp-SF", device, eval_slurp_sf)
+
 inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
 r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-r.start_worker("Slurp-SF", device, eval_slurp_sf)
+r.start_worker("LibriMix-OSR", device, eval_librimix_osr)

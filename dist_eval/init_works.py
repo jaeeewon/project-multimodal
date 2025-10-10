@@ -498,8 +498,16 @@ if __name__ == "__main__":
     # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     # r.initialize_tasks(task_name, slps)
 
+    # ===== initialize LibriMix OSR tasks =====
+    # from librimix import get_librimix_osr
+
+    # lms = get_librimix_osr()
+    # task_name = "LibriMix-OSR"
+    # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    # r.initialize_tasks(task_name, lms)
+
     # ===== monitor status =====
     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     while True:
-        r.statistics("Slurp-SF")
+        r.statistics("LibriMix-OSR")
         time.sleep(10)
