@@ -2,3 +2,4 @@ ann/salmonn_stage1_data.json filter=lfs diff=lfs merge=lfs -text
 ann/salmonn_stage2_data.json filter=lfs diff=lfs merge=lfs -text
 ann/salmonn_stage3_data.json filter=lfs diff=lfs merge=lfs -text
 redis/redis_250929_1808.rdb filter=lfs diff=lfs merge=lfs -text
+redis/redis_251010_2150.rdb filter=lfs diff=lfs merge=lfs -text
