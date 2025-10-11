@@ -16,7 +16,6 @@ def qwen3_api(
     payload = {
         "model": "Qwen/Qwen3-8B",
         "messages": [
-            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": 1024,
@@ -24,6 +23,9 @@ def qwen3_api(
         "seed": 42,
         # "temperature": 0.0,  # ValueError: `temperature` (=0.0) has to be a strictly positive float, otherwise your next token scores will be invalid. If you're looking for greedy decoding strategies, set `do_sample=False`.
     }
+
+    if system_prompt:
+        payload["messages"].insert(0, {"role": "system", "content": system_prompt})
 
     try:
         response = requests.post(
