@@ -6,6 +6,7 @@ import json
 
 # run `python -m vllm.entrypoints.openai.api_server   --model Qwen/Qwen3-8B   --tensor-parallel-size 4   --host 0.0.0.0   --port 8080`
 
+
 def qwen3_api(
     user_prompt: str,
     system_prompt: str = "",
@@ -19,6 +20,8 @@ def qwen3_api(
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": 1024,
+        "chat_template_kwargs": {"enable_thinking": False},
+        "seed": 42,
         # "temperature": 0.0,  # ValueError: `temperature` (=0.0) has to be a strictly positive float, otherwise your next token scores will be invalid. If you're looking for greedy decoding strategies, set `do_sample=False`.
     }
 
