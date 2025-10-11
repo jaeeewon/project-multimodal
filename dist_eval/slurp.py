@@ -8,7 +8,7 @@ slp_dir = "/home/jpong/Workspace/jaeeewon/slurp/wav"
 
 def get_slurp_sf(skip_exist=False, write_if_ne=False):
     ds = load_dataset("marcel-gohsen/slurp", split="test")
-    slp: list[dict] = []  # {id, path, slots}
+    slp: list[dict] = []  # {id, path, slots, transcript}
 
     for idx, rec in tqdm(
         enumerate(ds)
@@ -30,6 +30,7 @@ def get_slurp_sf(skip_exist=False, write_if_ne=False):
                 "id": rec["id"],
                 "path": path,
                 "slots": slots,
+                "transcript": rec["transcript"]
             }
         )
 
