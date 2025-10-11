@@ -9,9 +9,10 @@ wq_dir = "/home/jpong/Workspace/jaeeewon/wiki_qa/wav"
 def get_wikiqa_sqqa(skip_exist=False):
     ds = load_dataset("microsoft/wiki_qa", split="test")
     wq = ds.to_pandas()
-    wq = wq[["question_id", "question"]]
+    wq = wq[["question_id", "question", "answer"]]
     wq["path"] = wq["question_id"].apply(lambda id: os.path.join(wq_dir, id + ".wav"))
-    wq = wq.drop_duplicates().to_dict("records")
+    wq = wq.groupby('question_id')['answer'].apply(lambda ans: '; '.join(ans)).reset_index()
+    wq = wq.to_dict("records")
 
     if not skip_exist:
         for rec in wq:
