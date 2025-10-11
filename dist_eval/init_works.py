@@ -509,5 +509,5 @@ if __name__ == "__main__":
     # ===== monitor status =====
     r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
     while True:
-        r.statistics("LibriMix-OSR")
+        r.statistics("WikiQA-SQQA")
         time.sleep(10)

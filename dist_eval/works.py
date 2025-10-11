@@ -379,6 +379,38 @@ def eval_librimix_osr(data: dict):
     return {"infer": result}
 
 
+def eval_wikiqa_sqqa_judge(data: dict):
+    print(f"judging {data['path']}...")
+
+    infer = data["infer"]
+    answers = data["answer"].lower().split("; ")
+
+    USER_PROMPT = """
+Next I will give you a question and give you the corresponding standard answer and the answer I said. You need to judge whether my answer is correct or not based on the standard answer to the question. I will give you the question and the corresponding answer in the following form: {"Question": "xxx", "Standard Answer": "xxx", "My Answer": "xxx"}
+You need to judge the correctness of my answer, as well as state a short justification. Your responses need to follow the Python dictionary format:
+{"Correct": True / False, "Reason": "xxx"}
+Now, I will give you the following question and answer: 
+SENTENCEHERE
+Your response is: 
+"""
+
+    if infer.endswith("</s>"):
+        infer = infer[:-4].strip()
+
+    evaled = []
+    for ans in answers:
+        user_prompt = USER_PROMPT.replace(
+            "SENTENCEHERE",
+            f'{{"Question": "{data["question"]}", "Standard Answer": "{ans}", "My Answer": "{infer}"}}',
+        )
+        res = qwen3_api(user_prompt=user_prompt)
+        evaled.append(res)
+        print("res:", res)
+    print("=" * 20)
+
+    return {"accuracy-judge-qwen3": "; ".join(evaled)}
+
+
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=0)
 # r.start_worker("en2ja", device, eval_en2ja)
 
@@ -597,6 +629,44 @@ def eval_librimix_osr(data: dict):
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
 # r.start_worker("Slurp-SF", device, eval_slurp_sf)
 
-inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+# r.start_worker("LibriMix-OSR", device, eval_librimix_osr)
+
+# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+sqqa_judge_pf = "-judge-qwen3"
+
+# ===== init WikiQA judge tasks =====
+# task_name = "WikiQA-SQQA"
+# TASK_HASH_PREFIX = SalmonnRedis.TASK_HASH_PREFIX.format(task_name)
+# passkeys = [
+#     SalmonnRedis.PENDING_QUEUE.format(task_name),
+#     SalmonnRedis.PROCESSING_QUEUE.format(task_name),
+#     SalmonnRedis.PENDING_QUEUE.format(task_name) + sqqa_judge_pf,
+#     SalmonnRedis.PROCESSING_QUEUE.format(task_name) + sqqa_judge_pf,
+# ]
+
+# task_keys = [
+#     k
+#     for k in r.client.scan_iter(f"{TASK_HASH_PREFIX}*")
+#     if not k.startswith(tuple(passkeys))
+# ]
+
+# for key in task_keys:
+#     task_data = r.client.hgetall(key)
+
+#     status = task_data.get("status")
+
+#     if "worker" not in status and status == "completed":
+#         task_id = task_data.get("id")
+#         PENDING_QUEUE = SalmonnRedis.PENDING_QUEUE.format(task_name) + sqqa_judge_pf
+
+#         judge_key = f"accuracy{sqqa_judge_pf}"
+#         if judge_key in task_data:
+#             continue
+#         r.client.lpush(PENDING_QUEUE, task_id)
+
+# =====
+
 r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
-r.start_worker("LibriMix-OSR", device, eval_librimix_osr)
+r.start_worker("WikiQA-SQQA", device, eval_wikiqa_sqqa_judge, pf=sqqa_judge_pf)
