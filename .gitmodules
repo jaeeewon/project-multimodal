@@ -5,3 +5,9 @@
 [submodule "sakura"]
 	path = sakura
 	url = https://github.com/ckyang1124/SAKURA
+[submodule "lalms/open-source/qwen2-audio-instruct/Qwen2-Audio"]
+	path = lalms/open-source/qwen2-audio-instruct/Qwen2-Audio
+	url = https://github.com/jaeeewon/Qwen2-Audio.git
+[submodule "lalms/open-source/qwen-audio-chat/Qwen-Audio"]
+	path = lalms/open-source/qwen-audio-chat/Qwen-Audio
+	url = https://github.com/jaeeewon/Qwen-Audio.git
