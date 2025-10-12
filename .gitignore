@@ -7,3 +7,4 @@ __pycache__/
 *.tsv
 *.csv
 LS_testclean_pr.json
+*_ignore_*
