@@ -1,7 +1,6 @@
 from init_works import SalmonnRedis
 from collections import Counter
-import pandas as pd
-import numpy as np
+import pandas as pd, numpy as np, json
 
 r = SalmonnRedis(host="salmonn.hufs.jae.one", db=7)
 sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
@@ -10,7 +9,7 @@ sakura_judge_pf = "-judge-qwen3"
 corr_counter = Counter()
 incorr_counter = Counter()
 fail_counter = Counter()
-data = {"track": [], "hop": [], "accuracy": [], "size": [], "total": []}
+data = {"track": [], "hop": [], "accuracy": [], "model": [], "total": []}
 
 for pf, size in [("", 13), ("-7B", 7)]:
     for track in sakura_tracks:
@@ -59,7 +58,57 @@ for pf, size in [("", 13), ("-7B", 7)]:
                 data["track"].append(track)
                 data["hop"].append(hop)
                 data["accuracy"].append(corr_counter[task_name] / total)
-                data["size"].append(size)
+                data["model"].append(f"SALMONN-{size}B")
+                data["total"].append(total)
+            print()
+
+
+sakura_tracks = ["Emotion", "Language", "Animal", "Gender"]
+for model, pth in [
+    (
+        "qwen2-audio-instruct",
+        "lalms/open-source/qwen2-audio-instruct/sakura_llm-as-a-judge.json",
+    ),
+    (
+        "qwen-audio-chat",
+        "lalms/open-source/qwen-audio-chat/sakura_llm-as-a-judge.json",
+    ),
+]:
+    with open(pth, "r") as f:
+        judgs = json.load(f)
+    for i, judg in enumerate(judgs):
+        # (500 each for single and multi)
+        # 0 ~ 999: Emotion
+        # 1000 ~ 1999: Language
+        # 2000 ~ 2999: Animal
+        # 3000 ~ 3999: Gender
+        track = sakura_tracks[i // 1000]
+        hop = "multi" if i % 2 else "single"
+        task_name = f"{model}-SAKURA-{track}-{hop}"
+        if judg == "correct":
+            corr_counter[task_name] += 1
+        elif judg == "incorrect":
+            incorr_counter[task_name] += 1
+        else:
+            fail_counter[task_name] += 1
+
+        if i % 500 in [498, 499]:
+            print(f"===== {task_name} =====")
+            print(f"correct: {corr_counter[task_name]}")
+            print(f"incorrect: {incorr_counter[task_name]}")
+            print(f"failed: {fail_counter[task_name]}")
+            total = (
+                corr_counter[task_name]
+                + incorr_counter[task_name]
+                + fail_counter[task_name]
+            )
+            print(f"total: {total}")
+            if total > 0:
+                print(f"accuracy: {corr_counter[task_name] / total:.4f}")
+                data["track"].append(track)
+                data["hop"].append(hop)
+                data["accuracy"].append(corr_counter[task_name] / total)
+                data["model"].append(model)
                 data["total"].append(total)
             print()
 
@@ -72,8 +121,8 @@ df["ci"] = 1.96 * np.sqrt(p * (1 - p) / n + 1e-9)
 df["accuracy"] = df["accuracy"] * 100
 df["ci"] = df["ci"] * 100
 
-df_acc = df.pivot_table(index="size", columns=["track", "hop"], values="accuracy")
-df_ci = df.pivot_table(index="size", columns=["track", "hop"], values="ci")
+df_acc = df.pivot_table(index="model", columns=["track", "hop"], values="accuracy")
+df_ci = df.pivot_table(index="model", columns=["track", "hop"], values="ci")
 
 track_order = ["Gender", "Language", "Emotion", "Animal"]
 ordered_columns = [(track, hop) for track in track_order for hop in ["single", "multi"]]
@@ -91,143 +140,56 @@ df_ci.columns = new_columns
 
 df_final = df_acc.applymap("{:.1f}".format) + " ± " + df_ci.applymap("{:.1f}".format)
 
-df_final.rename_axis(index="Size (B)", inplace=True)
+df_final.rename_axis(index="Model", inplace=True)
 df_final.columns.names = [None]
 
-paper_data = [
-    "59.8 ± 4.3",
-    "48.6 ± 4.4",  # Gender (single, multi)
-    "21.8 ± 3.6",
-    "29.6 ± 4.0",  # Language (single, multi)
-    "19.8 ± 3.5",
-    "28.2 ± 3.9",  # Emotion (single, multi)
-    "68.6 ± 4.1",
-    "34.6 ± 4.2",  # Animal (single, multi)
-    "42.5 ± 4.3",
-    "35.3 ± 4.2",  # Average (single, multi)
+papers = {
+    "SALMONN-paper": [
+        "59.8 ± 4.3",
+        "48.6 ± 4.4",  # Gender (single, multi)
+        "21.8 ± 3.6",
+        "29.6 ± 4.0",  # Language (single, multi)
+        "19.8 ± 3.5",
+        "28.2 ± 3.9",  # Emotion (single, multi)
+        "68.6 ± 4.1",
+        "34.6 ± 4.2",  # Animal (single, multi)
+        "42.5 ± 4.3",
+        "35.3 ± 4.2",  # Average (single, multi)
+    ],
+    "qwen-audio-chat-paper": [
+        "49.6 ± 4.4",
+        "43.8 ± 4.3",  # Gender (single, multi)
+        "87.6 ± 2.9",
+        "40.6 ± 4.3",  # Language (single, multi)
+        "63.2 ± 4.2",
+        "37.0 ± 4.2",  # Emotion (single, multi)
+        "92.2 ± 2.4",
+        "66.0 ± 4.2",  # Animal (single, multi)
+        "73.2 ± 3.9",
+        "46.9 ± 4.4",  # Average (single, multi)
+    ],
+    "qwen2-audio-instruct-paper": [
+        "88.0 ± 2.8",
+        "47.2 ± 4.4",  # Gender (single, multi)
+        "83.8 ± 3.2",
+        "48.0 ± 4.4",  # Language (single, multi)
+        "64.2 ± 4.2",
+        "39.8 ± 4.3",  # Emotion (single, multi)
+        "88.8 ± 2.8",
+        "61.4 ± 4.3",  # Animal (single, multi)
+        "81.2 ± 3.4",
+        "49.1 ± 4.4",  # Average (single, multi)
+    ],
+}
+
+dfs = [
+    pd.DataFrame(
+        [paper_data], index=[paper_name], columns=df_final.columns
+    ).rename_axis(index="Model", inplace=False)
+    for paper_name, paper_data in papers.items()
 ]
 
-df_paper = pd.DataFrame([paper_data], index=["Paper"], columns=df_final.columns)
-df_paper.rename_axis(index="Size (B)", inplace=True)
+df_final = pd.concat([df_final] + dfs)
+df_final.sort_index(inplace=True)
 
-df_final = pd.concat([df_final, df_paper])
-
-df_final.to_markdown("results/salmonn_sakura.md")
-
-"""
-# SALMONN 14B with 8bit quantized LLM
-
-===== SAKURA-Animal-single =====
-correct: 365
-incorrect: 135
-failed: 0
-total: 500
-accuracy: 0.7300
-
-===== SAKURA-Animal-multi =====
-correct: 232
-incorrect: 267
-failed: 1
-total: 500
-accuracy: 0.4640
-
-===== SAKURA-Emotion-single =====
-correct: 155
-incorrect: 341
-failed: 4
-total: 500
-accuracy: 0.3100
-
-===== SAKURA-Emotion-multi =====
-correct: 159
-incorrect: 339
-failed: 2
-total: 500
-accuracy: 0.3180
-
-===== SAKURA-Gender-single =====
-correct: 269
-incorrect: 231
-failed: 0
-total: 500
-accuracy: 0.5380
-
-===== SAKURA-Gender-multi =====
-correct: 245
-incorrect: 253
-failed: 2
-total: 500
-accuracy: 0.4900
-
-===== SAKURA-Language-single =====
-correct: 110
-incorrect: 385
-failed: 5
-total: 500
-accuracy: 0.2200
-
-===== SAKURA-Language-multi =====
-correct: 110
-incorrect: 383
-failed: 7
-total: 500
-accuracy: 0.2200
-
-# SALMONN 14B with 8bit quantized LLM
-
-===== SAKURA-Animal-single-7B =====
-correct: 340
-incorrect: 159
-failed: 1
-total: 500
-accuracy: 0.6800
-
-===== SAKURA-Animal-multi-7B =====
-correct: 173
-incorrect: 323
-failed: 4
-total: 500
-accuracy: 0.3460
-
-===== SAKURA-Emotion-single-7B =====
-correct: 98
-incorrect: 399
-failed: 3
-total: 500
-accuracy: 0.1960
-
-===== SAKURA-Emotion-multi-7B =====
-correct: 141
-incorrect: 356
-failed: 3
-total: 500
-accuracy: 0.2820
-
-===== SAKURA-Gender-single-7B =====
-correct: 300
-incorrect: 200
-failed: 0
-total: 500
-accuracy: 0.6000
-
-===== SAKURA-Gender-multi-7B =====
-correct: 244
-incorrect: 255
-failed: 1
-total: 500
-accuracy: 0.4880
-
-===== SAKURA-Language-single-7B =====
-correct: 103
-incorrect: 396
-failed: 1
-total: 500
-accuracy: 0.2060
-
-===== SAKURA-Language-multi-7B =====
-correct: 147
-incorrect: 347
-failed: 6
-total: 500
-accuracy: 0.2940
-"""
+df_final.to_markdown("results/sakura.md")
