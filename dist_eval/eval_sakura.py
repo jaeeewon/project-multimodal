@@ -2,6 +2,38 @@ from init_works import SalmonnRedis
 from collections import Counter
 import pandas as pd, numpy as np, json
 
+
+def concordance_correlation_coefficient(y_true, y_pred):
+    """gen by gemini"""
+    # NumPy 배열로 변환
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+
+    # 평균 계산
+    mean_true = np.mean(y_true)
+    mean_pred = np.mean(y_pred)
+
+    # 분산 계산
+    var_true = np.var(y_true)
+    var_pred = np.var(y_pred)
+
+    # 공분산 계산
+    # ddof=0은 N으로 나누는 모공분산을 의미합니다.
+    cov = np.cov(y_true, y_pred, ddof=0)[0, 1]
+
+    # CCC 수식의 분자 계산
+    # 2 * rho * sigma_x * sigma_y는 2 * cov(x, y)와 같습니다.
+    numerator = 2 * cov
+
+    # CCC 수식의 분모 계산
+    denominator = var_true + var_pred + (mean_true - mean_pred) ** 2
+
+    # CCC 계산
+    ccc = numerator / denominator
+
+    return ccc
+
+
 r = SalmonnRedis(host="salmonn.hufs.jae.one", db=7)
 sakura_tracks = ["Animal", "Emotion", "Gender", "Language"]
 sakura_judge_pf = "-judge-qwen3"
@@ -182,14 +214,40 @@ papers = {
     ],
 }
 
+ccc_results = {}
+model_to_paper_map = {
+    "SALMONN-13B": "SALMONN-paper",
+    "SALMONN-7B": "SALMONN-paper",
+    "qwen-audio-chat": "qwen-audio-chat-paper",
+    "qwen2-audio-instruct": "qwen2-audio-instruct-paper",
+}
+
+for model_name, paper_key in model_to_paper_map.items():
+    if model_name in df_acc.index:
+        paper_accuracies = [float(s.split("±")[0].strip()) for s in papers[paper_key]]
+        y_true = np.array(paper_accuracies)
+
+        y_pred = df_acc.loc[model_name].values
+
+        ccc = concordance_correlation_coefficient(y_true, y_pred)
+        ccc_results[model_name] = ccc
+        # df_final.loc[model_name] = df_final.loc[model_name].apply(
+        #     lambda x: f"{x} / {ccc:.4f}"
+        # )
+        print(f"CCC for {model_name} (vs {paper_key}): {ccc:.4f}")
+
+ccc_series = pd.Series(ccc_results, name="CCC")
+df_final = df_final.join(ccc_series)
+
 dfs = [
     pd.DataFrame(
-        [paper_data], index=[paper_name], columns=df_final.columns
+        [paper_data], index=[paper_name], columns=df_final.columns[:-1]
     ).rename_axis(index="Model", inplace=False)
     for paper_name, paper_data in papers.items()
 ]
 
 df_final = pd.concat([df_final] + dfs)
 df_final.sort_index(inplace=True)
+df_final["CCC"] = df_final["CCC"].apply(lambda x: f"{x:.4f}" if pd.notna(x) else "-")
 
 df_final.to_markdown("results/sakura.md")
