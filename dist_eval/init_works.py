@@ -335,7 +335,7 @@ if __name__ == "__main__":
     # de = de[de["split"] == "test"].to_dict(orient="records")
     # # print(ja)
     # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=4)
-    # r.initialize_tasks("en2zh", de)
+    # r.initialize_tasks("en2zh_rev2", de)
 
     # ===== initialize GigaSpeech ASR tasks =====
     # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=5)
@@ -507,7 +507,7 @@ if __name__ == "__main__":
     # r.initialize_tasks(task_name, lms)
 
     # ===== monitor status =====
-    r = SalmonnRedis(host="salmonn.hufs.jae.one", db=8)
+    r = SalmonnRedis(host="salmonn.hufs.jae.one", db=4)
     while True:
-        r.statistics("WikiQA-SQQA")
+        r.statistics("en2zh_rev2")
         time.sleep(10)

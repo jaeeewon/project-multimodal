@@ -60,7 +60,7 @@ class Inference:
             self.config.model.whisper_path
         )
 
-    def infer_one_sample(self, wav_path: str, prompt: str):
+    def infer_one_sample(self, wav_path: str, prompt: str, skip_special_tokens=False):
         samples = prepare_one_sample(wav_path, self.wav_processor)
         prompt = [
             self.config.model.prompt_template.format(
@@ -68,7 +68,12 @@ class Inference:
             )
         ]
         with torch.cuda.amp.autocast(dtype=torch.float16):
-            return self.model.generate(samples, self.config.generate, prompts=prompt)[0]
+            return self.model.generate(
+                samples,
+                self.config.generate,
+                prompts=prompt,
+                skip_special_tokens=skip_special_tokens,
+            )[0]
 
     def infer_samples(self, wav_path: list[str], prompt: str):
         samples = [prepare_one_sample(pth, self.wav_processor) for pth in wav_path]

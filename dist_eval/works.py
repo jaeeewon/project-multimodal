@@ -96,7 +96,9 @@ def eval_en2zh(data: dict):
     prompt = "Listen to the speech and translate it into Chinese."
 
     reference = data["translation"]
-    result = inference.infer_one_sample(wav_path=path, prompt=prompt)
+    result = inference.infer_one_sample(
+        wav_path=path, prompt=prompt, skip_special_tokens=True
+    )
 
     _reference = remove_puncs(reference)
     _result = remove_puncs(result)
@@ -423,8 +425,9 @@ Your response is:
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=3) # cuda:2
 # r.start_worker("LibriSpeech-ASR-test-other", device, eval_librispeech_asr)
 
-# r = SalmonnRedis(host="salmonn.hufs.jae.one", db=4) # cuda:3
-# r.start_worker("en2zh", device, eval_en2zh)
+inference, bleu4_score, remove_puncs = get_utils(device, lora_scaling=4)
+r = SalmonnRedis(host="salmonn.hufs.jae.one", db=4)  # cuda:3
+r.start_worker("en2zh_rev2", device, eval_en2zh)
 
 # r = SalmonnRedis(host="salmonn.hufs.jae.one", db=5)
 # r.start_worker("GigaSpeech-ASR-test", device, eval_gigaspeech_asr)
