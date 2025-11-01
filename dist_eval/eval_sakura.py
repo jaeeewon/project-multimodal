@@ -280,6 +280,9 @@ df_final["CCC"] = df_final["CCC"].apply(lambda x: f"{x:.4f}" if pd.notna(x) else
 df_final.to_markdown("results/sakura.md")
 
 # merge keys for same model
+corr_counter_merged = Counter()
+incorr_counter_merged = Counter()
+fail_counter_merged = Counter()
 corr_duration_counter_merged = defaultdict(list[int])
 incorr_duration_counter_merged = defaultdict(list[int])
 fail_duration_counter_merged = defaultdict(list[int])
@@ -289,21 +292,27 @@ for key in corr_duration_counter:
     if not base_key:
         base_key = "SALMONN-{}B".format("7" if "-7B" in key else "13")
     corr_duration_counter_merged[base_key].extend(corr_duration_counter[key])
+    corr_counter_merged[base_key] += corr_counter[key]
 for key in incorr_duration_counter:
     splt = key.split("SAKURA-")
     base_key = splt[0]
     if not base_key:
         base_key = "SALMONN-{}B".format("7" if "-7B" in key else "13")
     incorr_duration_counter_merged[base_key].extend(incorr_duration_counter[key])
+    incorr_counter_merged[base_key] += incorr_counter[key]
 for key in fail_duration_counter:
     splt = key.split("SAKURA-")
     base_key = splt[0]
     if not base_key:
         base_key = "SALMONN-{}B".format("7" if "-7B" in key else "13")
     fail_duration_counter_merged[base_key].extend(fail_duration_counter[key])
+    fail_counter_merged[base_key] += fail_counter[key]
 corr_duration_counter = corr_duration_counter_merged
 incorr_duration_counter = incorr_duration_counter_merged
 fail_duration_counter = fail_duration_counter_merged
+corr_counter = corr_counter_merged
+incorr_counter = incorr_counter_merged
+fail_counter = fail_counter_merged
 
 # the code below is written by Copilot
 
