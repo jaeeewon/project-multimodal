@@ -1,5 +1,6 @@
 from omegaconf import OmegaConf
 import os
+from logit_processor import InteractiveLogitsProcessor
 
 os.environ["MXNET_FC_TRUE_FP16"] = "1"
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
@@ -286,26 +287,62 @@ class Inference:
                 stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
 
                 generate_cfg = self.config.generate
+
+                interactive_processor = InteractiveLogitsProcessor(tokenizer=self.model.llama_tokenizer, k=5)
+
+                configs = {
+                    "num_beams": 1,
+                    "output_scores": True,
+                    "return_dict_in_generate": True,
+                    "logits_processor": [interactive_processor],
+                    "do_sample": False,
+                }
+
+                print("answers:", samples["text"])
+
+                texts = self.model.llama_tokenizer.batch_decode(
+                    self.model.llama_model.generate(
+                        inputs_embeds=embeds,
+                        max_new_tokens=generate_cfg.get("max_new_tokens", 200),
+                        stopping_criteria=stopping_criteria,
+                        num_beams=generate_cfg.get("num_beams", 4),
+                        do_sample=generate_cfg.get("do_sample", False),
+                        min_length=generate_cfg.get("min_length", 1),
+                        temperature=generate_cfg.get("temperature", 1.0),
+                        top_p=generate_cfg.get("top_p", 0.9),
+                        repetition_penalty=generate_cfg.get("repetition_penalty", 1.0),
+                        length_penalty=generate_cfg.get("length_penalty", 1.0),
+                        attention_mask=attns,
+                    ),
+                    add_special_tokens=False,
+                    skip_special_tokens=True,
+                )
+
+                print("initial results:", texts)
+
                 outputs = self.model.llama_model.generate(
                     inputs_embeds=embeds,
                     max_new_tokens=generate_cfg.get("max_new_tokens", 200),
                     stopping_criteria=stopping_criteria,
-                    num_beams=generate_cfg.get("num_beams", 4),
-                    do_sample=generate_cfg.get("do_sample", False),
+                    # num_beams=generate_cfg.get("num_beams", 4),
+                    # do_sample=generate_cfg.get("do_sample", False),
                     min_length=generate_cfg.get("min_length", 1),
                     temperature=generate_cfg.get("temperature", 1.0),
                     top_p=generate_cfg.get("top_p", 0.9),
                     repetition_penalty=generate_cfg.get("repetition_penalty", 1.0),
                     length_penalty=generate_cfg.get("length_penalty", 1.0),
                     attention_mask=attns,
+                    **configs,
                 )
+
                 texts = self.model.llama_tokenizer.batch_decode(
-                    outputs, add_special_tokens=False, skip_special_tokens=True
+                    outputs.sequences, add_special_tokens=False, skip_special_tokens=True
                 )
 
                 print("=" * 50)
+                print("questions:", samples["query"])
                 print("answers:", samples["text"])
-                print("Initial results:", texts)
+                print("final results:", texts)
             hyps.extend(texts)
 
             ref = samples["text"]
