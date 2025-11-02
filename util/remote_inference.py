@@ -227,7 +227,7 @@ class Inference:
         df = pd.DataFrame({"id": ids, "hyps": results, "refs": ref})
         df.to_markdown("evaled_sakura.md")
 
-    def experiment(self):        
+    def experiment(self):
         testsets = SALMONNDataset(get_sakura_wrong_ds(), self.wav_processor, task="sakura")
         dataloader = get_dataloader(
             dataset=testsets,
@@ -235,7 +235,6 @@ class Inference:
             is_train=False,
             use_distributed=False,
         )
-        
 
         ids, hyps, refs = [], [], []
 
@@ -250,33 +249,72 @@ class Inference:
             ]
 
             with torch.cuda.amp.autocast(dtype=torch.float16):
-                results = self.model.generate(
-                    samples,
-                    self.config.generate,
-                    prompts=prompts,
-                    skip_special_tokens=True,
+                batch_size = samples["spectrogram"].shape[0]
+
+                spectrogram = samples["spectrogram"]
+                raw_wav = samples.get("raw_wav", None)
+                audio_padding_mask = samples.get("padding_mask", None)
+
+                speech_embeds, speech_atts = self.model.encode_speech(
+                    spectrogram, raw_wav=raw_wav, audio_padding_mask=audio_padding_mask
                 )
+
+                if prompts is not None:
+                    speech_embeds, speech_atts = self.model.prompt_wrap(
+                        speech_embeds, speech_atts, prompts, multi_prompt=True
+                    )
+
+                bos = (
+                    torch.ones(
+                        [batch_size, 1],
+                        dtype=torch.int32,
+                        device=speech_embeds.device,
+                    )
+                    * self.model.llama_tokenizer.bos_token_id
+                )
+                bos_embeds = (
+                    self.model.llama_model.model.embed_tokens(bos)
+                    if not self.model.lora
+                    else self.model.llama_model.model.model.embed_tokens(bos)
+                )
+                atts_bos = speech_atts[:, :1]
+
+                embeds = torch.cat([bos_embeds, speech_embeds], dim=1)
+                attns = torch.cat([atts_bos, speech_atts], dim=1)
+
+                stop_words_ids = [torch.tensor([2]).cuda()]
+                stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
+
+                generate_cfg = self.config.generate
+                outputs = self.model.llama_model.generate(
+                    inputs_embeds=embeds,
+                    max_new_tokens=generate_cfg.get("max_new_tokens", 200),
+                    stopping_criteria=stopping_criteria,
+                    num_beams=generate_cfg.get("num_beams", 4),
+                    do_sample=generate_cfg.get("do_sample", False),
+                    min_length=generate_cfg.get("min_length", 1),
+                    temperature=generate_cfg.get("temperature", 1.0),
+                    top_p=generate_cfg.get("top_p", 0.9),
+                    repetition_penalty=generate_cfg.get("repetition_penalty", 1.0),
+                    length_penalty=generate_cfg.get("length_penalty", 1.0),
+                    attention_mask=attns,
+                )
+                texts = self.model.llama_tokenizer.batch_decode(
+                    outputs, add_special_tokens=False, skip_special_tokens=True
+                )
+
                 print("=" * 50)
                 print("answers:", samples["text"])
-                print("Initial results:", results)
-                new_prompts = [f"{p} {r}\nUSER: Please re-evaluate your initial choice.\nASSISTANT:" for p, r in zip(prompts, results)]
-                # print("new prompts:", new_prompts)
-                results = self.model.generate(
-                    samples,
-                    self.config.generate,
-                    prompts=new_prompts,
-                )
-                print("Revised results:", results)
-            hyps.extend(results)
+                print("Initial results:", texts)
+            hyps.extend(texts)
 
-        
             ref = samples["text"]
             refs.extend(ref)
 
         # print('scoring "hyps" and "refs"')
 
-        df = pd.DataFrame({"id": ids, "hyps": results, "refs": ref})
-        df.to_markdown("evaled_sakura_exp.md")
+        df = pd.DataFrame({"id": ids, "hyps": hyps, "refs": refs})
+        df.to_markdown("results/evaled_sakura_exp.md", index=False)
 
 
 if __name__ == "__main__":
