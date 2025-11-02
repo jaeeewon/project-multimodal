@@ -288,17 +288,17 @@ class Inference:
 
                 generate_cfg = self.config.generate
 
-                interactive_processor = InteractiveLogitsProcessor(tokenizer=self.model.llama_tokenizer, k=5)
+                # interactive_processor = InteractiveLogitsProcessor(tokenizer=self.model.llama_tokenizer, k=5)
 
-                configs = {
-                    "num_beams": 1,
-                    "output_scores": True,
-                    "return_dict_in_generate": True,
-                    "logits_processor": [interactive_processor],
-                    "do_sample": False,
-                }
+                # configs = {
+                #     "num_beams": 1,
+                #     "output_scores": True,
+                #     "return_dict_in_generate": True,
+                #     "logits_processor": [interactive_processor],
+                #     "do_sample": False,
+                # }
 
-                print("answers:", samples["text"])
+                # print("answers:", samples["text"])
 
                 texts = self.model.llama_tokenizer.batch_decode(
                     self.model.llama_model.generate(
@@ -318,28 +318,61 @@ class Inference:
                     skip_special_tokens=True,
                 )
 
+                print("=" * 50)
                 print("initial results:", texts)
+
+                prompts = [
+                    self.config.model.prompt_template.format("<Speech><SpeechHere></Speech> " + q.strip())
+                    + " According to the audio,"
+                    for q in samples["query"]
+                ]
+
+                speech_embeds, speech_atts = self.model.encode_speech(
+                    spectrogram, raw_wav=raw_wav, audio_padding_mask=audio_padding_mask
+                )
+
+                if prompts is not None:
+                    speech_embeds, speech_atts = self.model.prompt_wrap(
+                        speech_embeds, speech_atts, prompts, multi_prompt=True
+                    )
+
+                bos = (
+                    torch.ones(
+                        [batch_size, 1],
+                        dtype=torch.int32,
+                        device=speech_embeds.device,
+                    )
+                    * self.model.llama_tokenizer.bos_token_id
+                )
+                bos_embeds = (
+                    self.model.llama_model.model.embed_tokens(bos)
+                    if not self.model.lora
+                    else self.model.llama_model.model.model.embed_tokens(bos)
+                )
+                atts_bos = speech_atts[:, :1]
+
+                embeds = torch.cat([bos_embeds, speech_embeds], dim=1)
+                attns = torch.cat([atts_bos, speech_atts], dim=1)
 
                 outputs = self.model.llama_model.generate(
                     inputs_embeds=embeds,
                     max_new_tokens=generate_cfg.get("max_new_tokens", 200),
                     stopping_criteria=stopping_criteria,
-                    # num_beams=generate_cfg.get("num_beams", 4),
-                    # do_sample=generate_cfg.get("do_sample", False),
+                    num_beams=generate_cfg.get("num_beams", 4),
+                    do_sample=generate_cfg.get("do_sample", False),
                     min_length=generate_cfg.get("min_length", 1),
                     temperature=generate_cfg.get("temperature", 1.0),
                     top_p=generate_cfg.get("top_p", 0.9),
                     repetition_penalty=generate_cfg.get("repetition_penalty", 1.0),
                     length_penalty=generate_cfg.get("length_penalty", 1.0),
                     attention_mask=attns,
-                    **configs,
+                    # **configs,
                 )
 
                 texts = self.model.llama_tokenizer.batch_decode(
-                    outputs.sequences, add_special_tokens=False, skip_special_tokens=True
+                    outputs, add_special_tokens=False, skip_special_tokens=True
                 )
 
-                print("=" * 50)
                 print("questions:", samples["query"])
                 print("answers:", samples["text"])
                 print("final results:", texts)
