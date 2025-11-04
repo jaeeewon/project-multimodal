@@ -4,14 +4,14 @@ from ..types.redis_config import RedisConfig
 
 
 class SakuraDataProvider(RedisDataProvider):
-    def __init__(self, redis_cfg: RedisConfig, key_prefix: str, filter: dict = None):
+    def __init__(self, redis_cfg: RedisConfig, key_prefix: str, required_fields: list[str] = None, filter: dict = None):
         super().__init__(
             redis_cfg=redis_cfg,
             key_prefix=key_prefix,
-            required_fields=[],
+            required_fields=required_fields,
             required_fields_type=RedisDataProvider.skip_type_enum_rev["strict"],
             filter=filter,
-            filter_type=RedisDataProvider.skip_type_enum_rev["skip_missing_with_warn"],
+            filter_type=RedisDataProvider.skip_type_enum_rev["skip_missing_without_warn"],
         )
 
     def insert_ds(self):
@@ -29,8 +29,8 @@ if __name__ == "__main__":
         filter={"set": "language"},
     )
 
-    # sakura_provider.delete_ds()
-    # sakura_provider.insert_ds()
+    sakura_provider.delete_ds()
+    sakura_provider.insert_ds()
 
     for sakura in sakura_provider:
         # test: instant update
