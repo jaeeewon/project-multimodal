@@ -1,5 +1,6 @@
 import redis
 import threading
+from ..types.redis_config import RedisConfig
 
 # DB9: test db
 # DB10: cache db
@@ -11,9 +12,10 @@ class RedisConnectionManager:
     _lock = threading.Lock()
 
     @classmethod
-    def get_connection(
-        cls, host: str = "localhost", port: int = 6379, db: int = 0, decode_responses: bool = True
-    ) -> redis.Redis:
+    def get_connection(cls, redis_cfg: RedisConfig) -> redis.Redis:
+        host, port, db = redis_cfg["host"], redis_cfg["port"], redis_cfg["db"]
+        decode_responses = redis_cfg["decode_responses"] if "decode_responses" in redis_cfg else True
+
         key = f"{host}:{port}:{db}:{decode_responses}"
 
         conn = cls._connections.get(key)
