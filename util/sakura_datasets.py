@@ -14,7 +14,7 @@ def get_sakura_ds():
         with open(path, "r") as f:
             metadata = json.load(f)
 
-        for k, v in metadata.items():
+        for i, (k, v) in enumerate(metadata.items()):
             sakura.append(
                 {
                     "id": len(sakura),
@@ -22,6 +22,9 @@ def get_sakura_ds():
                     "query": v["single_instruction"],
                     "text": v["single_answer"],
                     "task": "sakura",
+                    "hop": "single",
+                    "set": sets.lower(),
+                    "local_index": i,
                 }
             )
 
@@ -32,6 +35,9 @@ def get_sakura_ds():
                     "query": v["multi_instruction"],
                     "text": v["multi_answer"],
                     "task": "sakura",
+                    "hop": "multi",
+                    "set": sets.lower(),
+                    "local_index": i,
                 }
             )
 
@@ -44,7 +50,7 @@ def get_sakura_wrong_ds(multi_only=True):
         evaled = json.load(f)
     for i, (sakura, ev) in enumerate(zip(get_sakura_ds(), evaled)):
         if ev == "incorrect":
-            if multi_only and i % 2 == 0: # even index is single
+            if multi_only and i % 2 == 0:  # even index is single
                 continue
             ds.append(sakura)
     return ds
