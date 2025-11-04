@@ -26,6 +26,8 @@ class Document:
         if value is None:
             raise KeyError(f"field '{field}' not found for key '{self._key}'")
 
+        return value
+
     def __setitem__(self, field: str, value):
         if field == "key":
             raise KeyError("field 'key' is read-only")
