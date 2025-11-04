@@ -51,16 +51,6 @@ class RedisDataProvider(AbstractDataProvider):
                 else:
                     raise NotImplementedError(f"invalid required_type: {self.required_type}")
 
-            if "ground_truth" not in sample:
-                print(f"[{self.key_prefix}] Warning: 'ground_truth' missing in sample {key}. Skipping.")
-                continue
-
-            if "input" in sample and isinstance(sample["input"], str):
-                try:
-                    sample["input"] = json.loads(sample["input"])
-                except json.JSONDecodeError:
-                    pass
-
             yield sample
 
     def insert_samples(self, samples: list[Sample]):
