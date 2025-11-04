@@ -18,7 +18,7 @@ def get_sakura_ds():
             sakura.append(
                 {
                     "id": len(sakura),
-                    "path": os.path.join(sakura_path, k),
+                    "wav": os.path.join(sakura_path, k),
                     "query": v["single_instruction"],
                     "text": v["single_answer"],
                     "task": "sakura",
@@ -31,7 +31,7 @@ def get_sakura_ds():
             sakura.append(
                 {
                     "id": len(sakura),
-                    "path": os.path.join(sakura_path, k),
+                    "wav": os.path.join(sakura_path, k),
                     "query": v["multi_instruction"],
                     "text": v["multi_answer"],
                     "task": "sakura",
