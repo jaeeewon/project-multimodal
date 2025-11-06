@@ -3,7 +3,7 @@ import os, json
 sakura_path = "/home/jpong/Workspace/jaeeewon/repr/sakura"
 
 
-def get_sakura_ds():
+def get_sakura_ds(is_exp=False):
     sakura = []
 
     for sets in os.listdir(os.path.join(sakura_path, "data")):
@@ -15,6 +15,8 @@ def get_sakura_ds():
             metadata = json.load(f)
 
         for i, (k, v) in enumerate(metadata.items()):
+            if is_exp and i % 50:
+                continue
             sakura.append(
                 {
                     "id": len(sakura),
