@@ -2,11 +2,16 @@ import json
 import hashlib
 from typing import Optional, Any
 from .connection import RedisConnectionManager
+from ..types.redis_config import RedisConfig
 
 
 class CacheManager:
-    def __init__(self, host: str, port: int, db: int):
-        self.redis_conn = RedisConnectionManager.get_connection(host=host, port=port, db=db, decode_responses=False)
+    def __init__(self, redis_config: RedisConfig):
+        self.redis_conn = RedisConnectionManager.get_connection(
+            RedisConfig(
+                host=redis_config["host"], port=redis_config["port"], db=redis_config["db"], decode_responses=False
+            )
+        )
 
     def _generate_key(self, *args: str) -> str:
         combined = ":".join(args)
@@ -38,7 +43,7 @@ class CacheManager:
 
 if __name__ == "__main__":
     # python -m evaluation.utils.cache
-    cache_manager = CacheManager(host="salmonn.hufs.jae.one", port=6379, db=10)
+    cache_manager = CacheManager(RedisConfig(host="salmonn.hufs.jae.one", port=6379, db=10))
 
     model_id = "model_123"
     data_id = "data_456"
