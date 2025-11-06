@@ -50,10 +50,10 @@ class SALMONNModel(AbstractModel):
 
 
 if __name__ == "__main__":
-    import os
+    # import os
     from ..data.sakura import SakuraDataProvider, RedisConfig
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
     model = SALMONNModel(config_path="configs/eval_13b.yaml")
     data_provider = SakuraDataProvider(
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     model.infer(
         data_provider,
-        batch_size=2,
+        batch_size=1,
         # callback_fn=lambda sample, inference: print(f"SALMONN output for {sample['query']}:\n {inference}"),
         callback_fn=callback_fn,
     )
