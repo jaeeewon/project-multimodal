@@ -1,9 +1,11 @@
 from collections.abc import Generator
+from collections import Counter, defaultdict
 from typing import Any
 from ..abs.data_provider import AbstractDataProvider, Sample
 from ..utils.connection import RedisConnectionManager
 from ..utils.document import Document
 from ..types.redis_config import RedisConfig
+import json
 
 
 class RedisDataProvider(AbstractDataProvider):
@@ -34,7 +36,7 @@ class RedisDataProvider(AbstractDataProvider):
         self.redis_cfg = redis_cfg
 
         if not self.__len__():
-            print(f'no keys found for the given prefix "{self.key_prefix}".')
+            print(f'no keys found for the given prefix "{self.key_prefix}" and filter "{json.dumps(self._filter)}".')
             input("press enter to continue or ctrl+c to abort > ")
 
     @property
@@ -133,6 +135,37 @@ class RedisDataProvider(AbstractDataProvider):
     def update_samples(self, keys: list[str], values: list[dict]):
         for k, vs in zip(keys, values):
             self._redis_conn.hset(k, mapping=vs)
+
+    def status(self, keys: list[str] = ["status"]):
+        """
+        일반 문자열은 키로 검사하나, bin_으로 시작하는 키는 존재 여부를 따짐
+        """
+        keys = list(set(keys))
+
+        title = f"===== status for {self.data_id} ====="
+        print(title)
+        cnt = defaultdict(Counter)
+        for data in iter(self):
+            for key in keys:
+                if key.startswith("bin_"):
+                    key = key[4:]
+                    k = "exists" if key in data else "not_exists"
+                else:
+                    k = data[key] if key in data else "unknown"
+                cnt[key][k] += 1
+
+        print()
+        for key in cnt:
+            tg_title = f"--- key: {key} ---"
+            print(tg_title)
+
+            for k, v in cnt[key].items():
+                print(f"  {k}: {v}")
+            print("-" * len(tg_title))
+        print("=" * len(title))
+
+    def update_filter(self, filter: dict):
+        self._filter = filter
 
 
 if __name__ == "__main__":
