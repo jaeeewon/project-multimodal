@@ -47,7 +47,17 @@ class RedisDataProvider(AbstractDataProvider):
 
         while cursor != 0 or count == 0:
             cursor, keys = self._redis_conn.scan(cursor=cursor, match=self.key_pattern, count=1000)
-            count += len(keys)
+
+            if not self._filter:
+                count += len(keys)
+            else:
+                for key in keys:
+                    sample = self._redis_conn.hgetall(key)
+
+                    if self._filter and len([k for k, v in self._filter.items() if k not in sample or sample[k] != v]):
+                        continue
+
+                    count += 1
 
             if cursor == 0:
                 break
