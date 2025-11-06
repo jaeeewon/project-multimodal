@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Callable
 from tqdm import tqdm
 from .data_provider import AbstractDataProvider, Sample
+from datetime import datetime
 
 os.environ["MXNET_FC_TRUE_FP16"] = "1"
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
@@ -55,6 +56,8 @@ class AbstractModel(ABC):
         iterator = iter(data_provider)
 
         for i, sample in tqdm(enumerate(iterator), total=total, desc=f"{self.model_id}:{data_provider.data_id}"):
+            sample["takenAt"] = int(datetime.utcnow().timestamp())
+            sample["status"] = "taken"
             batch.append(sample)
 
             if len(batch) == batch_size or (i + 1) == total:
@@ -67,6 +70,7 @@ class AbstractModel(ABC):
                     predicted.extend([f"_inference: {e}"] * len(batch))
                 finally:
                     for sample, inference in zip(batch, batch_preds):
+                        sample["status"] = "inferenced"
                         sample["inference"] = inference
                         if callback_fn:
                             callback_fn(sample, inference)
