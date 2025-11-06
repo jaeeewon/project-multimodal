@@ -41,7 +41,7 @@ class Document:
             raise KeyError(f"field '{field}' not found for key '{self._key}'")
 
     def __contains__(self, field: str) -> bool:
-        db = RedisConnectionManager.get_connection(**self._redis_cfg)
+        db = RedisConnectionManager.get_connection(self._redis_cfg)
         return db.hexists(self._key, field)
 
     def delete(self, get=False):
