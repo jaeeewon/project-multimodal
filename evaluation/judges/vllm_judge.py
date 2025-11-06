@@ -10,24 +10,29 @@ class VllmJudge(AbstractJudge):
         self.seed = seed
         self.temperature = temperature
         self.top_p = top_p
-        self._client = AsyncOpenAI(base_url="http://salmonn.hufs.jae.one:8080/v1", api_key="salmonn")
+        self._client = AsyncOpenAI(base_url="http://vllm.hufs.jae.one:8080/v1", api_key="salmonn")
         self._client.models.list()
 
     @property
     def model_name(self) -> str:
         return self.model
 
-    def judge_batch(self, prompts: list[list[dict[str, str]]], batch_size: int) -> list[str]:
+    def judge_batch(self, prompts: list[list[dict[str, str]]], batch_size: int, use_tqdm=True) -> list[str]:
         # ex. [{"role": "system", "content": ""}, {"role": "user", "content": ""}]
         try:
-            return asyncio.run(self._async_judge_batch(prompts, batch_size))
+            return asyncio.run(self._async_judge_batch(prompts, batch_size, use_tqdm))
         except Exception as e:
             print(f"[VLLM] failed to call api: {e}")
             return [str(e)] * len(prompts)
 
-    async def _async_judge_batch(self, prompts: list[list[dict[str, str]]], batch_size: int) -> list[str]:
+    async def _async_judge_batch(
+        self, prompts: list[list[dict[str, str]]], batch_size: int, use_tqdm=True
+    ) -> list[str]:
         results = []
-        for i in tqdm(range(0, len(prompts), batch_size), desc="Calling VLLM"):
+
+        it = range(0, len(prompts), batch_size)
+
+        for i in tqdm(it, desc="Calling VLLM") if use_tqdm else it:
             batch = prompts[i : i + batch_size]
 
             if not batch:
@@ -40,7 +45,7 @@ class VllmJudge(AbstractJudge):
                 results.extend(batch_results)
             except Exception as e:
                 print(f"[VLLM] Failed to call api for a batch: {e}")
-                results.extend([f"vllm: {e}"] * len(batch))
+                results.extend([f"judge_err_vllm: {e}"] * len(batch))
 
         return results
 
