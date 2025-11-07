@@ -197,7 +197,7 @@ def shared(device: str, data_provider: SakuraDataProvider, result_queue: Queue):
             start_time = datetime.datetime.now()
             infered = model.infer(
                 data_provider,
-                batch_size=1,
+                batch_size=3,
                 # callback_fn=callback_fn,
             )
             elapsed_time = datetime.datetime.now() - start_time
@@ -269,8 +269,9 @@ if __name__ == "__main__":
     # python -m evaluation.sakura_exp
 
     model_name = "salmonn-13b"
+    exp_id = "SLMN13-SK-B3"
     # exp_id = "SLMN13-SK"
-    exp_id = "SLMN13-SK%50"
+    # exp_id = "SLMN13-SK%50"
 
     # DB11: EXP
     data_provider = SakuraDataProvider(
