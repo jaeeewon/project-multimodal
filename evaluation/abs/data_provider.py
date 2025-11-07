@@ -50,6 +50,9 @@ class AbstractDataProvider(ABC):
                 s = samples
                 samples = []
                 yield s
+        
+        if samples:
+            yield samples
 
     def get_all_samples(self) -> list[Sample]:
         return list(self)
