@@ -197,7 +197,7 @@ def shared(device: str, data_provider: SakuraDataProvider, result_queue: Queue):
             start_time = datetime.datetime.now()
             infered = model.infer(
                 data_provider,
-                batch_size=3,
+                batch_size=data['run']['batch_size_eval'],
                 # callback_fn=callback_fn,
             )
             elapsed_time = datetime.datetime.now() - start_time

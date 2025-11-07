@@ -59,6 +59,6 @@ generate:
   length_penalty: 1.0
 
 run:
-  batch_size_eval: 1
+  batch_size_eval: 3
   num_workers: 4
   device: "cuda"
