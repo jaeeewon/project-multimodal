@@ -6,6 +6,7 @@ from .evaluators.llm_as_judge import LLMEvaluator
 import tempfile, yaml, datetime, os, traceback, re, pandas as pd
 from multiprocessing import Process, Queue
 from collections import Counter
+from .salmonn_test import test_inference_fn
 
 system_prompt = """You are a good judge. You will be given a question with list of possible options, a ground truth answer and a model generated response.
 You have to determine whether the model generated answer is correct."""
@@ -199,6 +200,7 @@ def shared(device: str, data_provider: SakuraDataProvider, result_queue: Queue):
                 data_provider,
                 batch_size=data['run']['batch_size_eval'],
                 # callback_fn=callback_fn,
+                inference_fn=test_inference_fn
             )
             elapsed_time = datetime.datetime.now() - start_time
 
@@ -269,7 +271,8 @@ if __name__ == "__main__":
     # python -m evaluation.sakura_exp
 
     model_name = "salmonn-13b"
-    exp_id = "SLMN13-SK-B3"
+    exp_id = "SLMN13-TEST"
+    # exp_id = "SLMN13-SK-B3"
     # exp_id = "SLMN13-SK"
     # exp_id = "SLMN13-SK%50"
 
@@ -280,8 +283,8 @@ if __name__ == "__main__":
         required_fields=["wav", "query"],
         filter={"status": "initialized"},
     )
-    # data_provider.delete_ds()
-    # data_provider.insert_ds(is_exp=True)
+    data_provider.delete_ds()
+    data_provider.insert_ds(is_exp=True)
     # data_provider.insert_ds(is_exp=False)
     # data_provider.status()
 

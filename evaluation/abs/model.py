@@ -44,36 +44,35 @@ class AbstractModel(ABC):
         pass
 
     def infer(
-        self, data_provider: AbstractDataProvider, batch_size: int = 8, callback_fn: Callable = None
+        self,
+        data_provider: AbstractDataProvider,
+        batch_size: int = 8,
+        callback_fn: Callable = None,
+        inference_fn: Callable = None,
     ) -> List[str]:
         if self.model is None or self.tokenizer is None:
             raise RuntimeError("models or tokenizer are not loaded")
 
-        predicted: List[str] = []
-        batch: List[Sample] = []
+        predicted = []
 
-        total = len(data_provider)
-        iterator = iter(data_provider)
+        filter = {"status": "initialized"}
 
-        for i, sample in tqdm(enumerate(iterator), total=total, desc=f"{self.model_id}:{data_provider.data_id}"):
-            sample["takenAt"] = int(datetime.utcnow().timestamp())
-            sample["status"] = "taken"
-            batch.append(sample)
+        for batch in tqdm(data_provider.take(batch_size, filter), total=data_provider.len(filter)):
+            try:
+                batch_preds = inference_fn(batch, self) if inference_fn else self._inference(batch)
+                predicted.extend(batch_preds)
 
-            if len(batch) == batch_size or (i + 1) == total:
-                try:
-                    batch_preds = self._inference(batch)
-                    predicted.extend(batch_preds)
-                except Exception as e:
-                    print(f"failed to infer: {e}")
-                    batch_preds = []
-                    predicted.extend([f"_inference: {e}"] * len(batch))
-                finally:
-                    for sample, inference in zip(batch, batch_preds):
-                        sample["status"] = "inferenced"
-                        sample["inference"] = inference
-                        if callback_fn:
-                            callback_fn(sample, inference)
-                    batch.clear()
+                for sample, inference in zip(batch, batch_preds):
+                    sample["status"] = "inferenced"
+                    sample["inference"] = inference
+                    if callback_fn:
+                        callback_fn(sample, inference)
+            except Exception as e:
+                print(f"failed to infer: {e}")
+                batch_preds = []
+                predicted.extend([f"_inference: {e}"] * len(batch))
+
+                for sample in batch:
+                    sample["status"] = "initialized"
 
         return predicted
