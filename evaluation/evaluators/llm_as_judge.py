@@ -55,6 +55,8 @@ class LLMEvaluator(AbstractEvaluator):
             ):
                 if ev.startswith("judge_err"):
                     print(f"failed to evaluate {tgt}: {ev}")
+
+                    tgt["status"] = "initialized"
                     continue
 
                 tgt["status"] = "evaluated"
