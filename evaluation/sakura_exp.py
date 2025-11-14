@@ -6,7 +6,7 @@ from .evaluators.llm_as_judge import LLMEvaluator
 import tempfile, yaml, datetime, os, traceback, re, pandas as pd
 from multiprocessing import Process, Queue
 from collections import Counter
-from .salmonn_test import test_inference_fn
+from .salmonn_test import test_inference_fn, test_batch_inference
 
 system_prompt = """You are a good judge. You will be given a question with list of possible options, a ground truth answer and a model generated response.
 You have to determine whether the model generated answer is correct."""
@@ -72,7 +72,7 @@ def save_data(df):
     df_sorted.to_markdown(MD_FILE_PATH, index=False)
 
 
-def save_experiment(base_exp_id: str, data_provider: SakuraDataProvider):
+def save_experiment(base_exp_id: str, model_name: str, data_provider: SakuraDataProvider):
     """
     this function, **especially saving results to csv**, is written by Gemini
     """
@@ -104,9 +104,32 @@ def save_experiment(base_exp_id: str, data_provider: SakuraDataProvider):
         elif judgement == "incorrect":
             incorrect_count[f"{doc['set']}-{doc['hop']}"] += 1
         else:
-            print(f"Invalid judgement for key: {k}")
+            print(f"Invalid judgement for key: {doc['key']}")
         total_count[f"{doc['set']}-{doc['hop']}"] += 1
     # ===== extract_judgement@llm_judge.py =====
+
+    model_base = {
+        "salmonn-13b": {
+            "animal-multi": 46.4,
+            "animal-single": 73.2,
+            "emotion-multi": 31.8,
+            "emotion-single": 31.2,
+            "gender-multi": 49.2,
+            "gender-single": 53.8,
+            "language-multi": 22.0,
+            "language-single": 22.6,
+        },
+        "salmonn-7b": {
+            "animal-multi": 34.6,
+            "animal-single": 68.2,
+            "emotion-multi": 28.4,
+            "emotion-single": 20,
+            "gender-multi": 48.8,
+            "gender-single": 60,
+            "language-multi": 29.8,
+            "language-single": 20.6,
+        },
+    }
 
     for category in correct_count:
         # print(f"===== {category} =====")
@@ -139,6 +162,8 @@ def save_experiment(base_exp_id: str, data_provider: SakuraDataProvider):
         accuracy_delta = pd.NA
         if pd.notna(prev_accuracy):
             accuracy_delta = round(accuracy - prev_accuracy, 2)
+        base = model_base[model_name].get(category)
+        accuracy_delta = accuracy - base if base else pd.NA
 
         # 8. 새 결과 행(Row) 생성
         new_row = {
@@ -172,7 +197,7 @@ def save_experiment(base_exp_id: str, data_provider: SakuraDataProvider):
     save_data(df_final)
 
 
-def shared(device: str, data_provider: SakuraDataProvider, result_queue: Queue):
+def shared(device: str, config: dict, data_provider: SakuraDataProvider, result_queue: Queue):
     try:
         os.environ["CUDA_VISIBLE_DEVICES"] = device.split(":")[-1]
 
@@ -186,10 +211,9 @@ def shared(device: str, data_provider: SakuraDataProvider, result_queue: Queue):
         if not len(data_provider):
             print(f"[{device}] inference already done")
         else:
-            data = yaml.safe_load(open("configs/eval_13b.yaml"))
             with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=True) as tmpfile:
-                data["model_class"]["device"] = "cuda:0"
-                yaml.dump(data, tmpfile)
+                config["model_class"]["device"] = "cuda:0"
+                yaml.dump(config, tmpfile)
                 model = SALMONNModel(config_path=tmpfile.name)
 
             # def callback_fn(sample, inference):
@@ -198,9 +222,9 @@ def shared(device: str, data_provider: SakuraDataProvider, result_queue: Queue):
             start_time = datetime.datetime.now()
             infered = model.infer(
                 data_provider,
-                batch_size=data['run']['batch_size_eval'],
+                batch_size=config["run"]["batch_size_eval"],
                 # callback_fn=callback_fn,
-                inference_fn=test_inference_fn
+                inference_fn=test_batch_inference,
             )
             elapsed_time = datetime.datetime.now() - start_time
 
@@ -243,11 +267,12 @@ def shared(device: str, data_provider: SakuraDataProvider, result_queue: Queue):
         result_queue.put((e, traceback.format_exc()))
 
 
-def main(exp_id: str, data_provider: SakuraDataProvider):
-    devices = ["cuda:0", "cuda:2", "cuda:3"]
+def main(exp_id: str, devices: list[str], config: dict, data_provider: SakuraDataProvider):
     result_queue = Queue()
 
-    processes = [Process(name=device, target=shared, args=(device, data_provider, result_queue)) for device in devices]
+    processes = [
+        Process(name=device, target=shared, args=(device, config, data_provider, result_queue)) for device in devices
+    ]
 
     for process in processes:
         process.start()
@@ -264,17 +289,17 @@ def main(exp_id: str, data_provider: SakuraDataProvider):
         else:
             print(f"[{process.name}] processed {len(q)} documents totally")
 
-    save_experiment(exp_id, data_provider)
-
 
 if __name__ == "__main__":
     # python -m evaluation.sakura_exp
+    devices = ["cuda:0", "cuda:1"]
+    # devices = ["cuda:2", "cuda:3"]
+    # devices = ["cuda:0", "cuda:1", "cuda:2"]
+    model_name = "salmonn-7b"
+    exp_id = "SLMN7-B1--base"
 
-    model_name = "salmonn-13b"
-    exp_id = "SLMN13-TEST"
-    # exp_id = "SLMN13-SK-B3"
-    # exp_id = "SLMN13-SK"
-    # exp_id = "SLMN13-SK%50"
+    config = yaml.safe_load(open("configs/eval_7b.yaml"))
+    config["run"]["batch_size_eval"] = 1
 
     # DB11: EXP
     data_provider = SakuraDataProvider(
@@ -283,13 +308,14 @@ if __name__ == "__main__":
         required_fields=["wav", "query"],
         filter={"status": "initialized"},
     )
-    data_provider.delete_ds()
-    data_provider.insert_ds(is_exp=True)
-    # data_provider.insert_ds(is_exp=False)
+    # data_provider.delete_ds()
+    # data_provider.insert_ds(is_exp=True)
+    data_provider.insert_ds(is_exp=False)
     # data_provider.status()
 
     start_time = datetime.datetime.now()
-    main(exp_id=exp_id, data_provider=data_provider)
+    main(exp_id=exp_id, devices=devices, config=config, data_provider=data_provider)
+    save_experiment(exp_id, model_name, data_provider)
     elapsed_time = datetime.datetime.now() - start_time
 
     print(f"===== totally elapsed for experiment {exp_id} - {elapsed_time} =====")
