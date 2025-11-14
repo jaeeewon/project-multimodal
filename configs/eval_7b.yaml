@@ -1,8 +1,8 @@
 model:
-  llama_path: "/home/jpong/Workspace/jaeeewon/vicuna-13b-v1.1"
+  llama_path: "/home/jpong/Workspace/jaeeewon/vicuna-7b-v1.5"
   whisper_path: "/home/jpong/Workspace/jaeeewon/whisper-large-v2"
   beats_path: "/home/jpong/Workspace/jaeeewon/beats/BEATs_iter3_plus_AS2M_finetuned_on_AS2M_cpt2.pt"
-  ckpt: "/home/jpong/Workspace/jaeeewon/SALMONN-13B/salmonn_v1.pth"
+  ckpt: "/home/jpong/Workspace/jaeeewon/SALMONN-7B/salmonn_7b_v0.pth"
   freeze_whisper: True
   freeze_beats: True
 
@@ -29,7 +29,7 @@ model:
   test_prompt_path: "prompts/test_prompt.json"
   max_txt_len: 300
   end_sym: "</s>"
-  low_resource: True
+  low_resource: False
 
 generate:
   max_new_tokens: 200
@@ -47,7 +47,7 @@ run:
   device: "cuda"
 
 abs_class:
-  model_name: SALMONN-13B
+  model_name: SALMONN-7B
   seed: 42
 
 model_class:
