@@ -48,15 +48,17 @@ def get_sakura_ld_ds(type: str, pos: str, target_len: int, is_exp=False, gen=Fal
             if gen and not os.path.exists(data["wav"]):
                 y, _ = librosa.load(org, sr=target_sr)
                 fill_len = target_sr * target_len - len(y)
-                assert fill_len > 0, f"original length must be shorter than {target_len} sec"
+                # assert fill_len > 0, f"original length must be shorter than {target_len} sec"
 
-                filler = fillers[type](fill_len)
-                if pos == "early":
-                    y_filled = np.concatenate([y, filler])
-                elif pos == "middle":
-                    y_filled = np.concatenate([filler[: fill_len // 2], y, filler[fill_len // 2 :]])
-                elif pos == "late":
-                    y_filled = np.concatenate([filler, y])
+                y_filled = y
+                if fill_len > 0:
+                    filler = fillers[type](fill_len)
+                    if pos == "early":
+                        y_filled = np.concatenate([y, filler])
+                    elif pos == "middle":
+                        y_filled = np.concatenate([filler[: fill_len // 2], y, filler[fill_len // 2 :]])
+                    elif pos == "late":
+                        y_filled = np.concatenate([filler, y])
 
                 sf.write(data["wav"], y_filled, target_sr)
         # </update_path>

@@ -23,7 +23,7 @@ if [[ "$MODE" == "--exp" && -z "$DEVICES_RAW" ]]; then
 fi
 
 MODEL="salmonn-7b"
-TARGET_LEN=30
+TARGET_LEN=15
 BATCH=5
 
 mkdir -p ./logs
@@ -36,7 +36,7 @@ LD_KEYS["zero-padded"]="zp"
 LD_KEYS["noised"]="nz"
 LD_KEYS["source"]="src"
 
-TYPES=("zero-padded" "noised" "source")
+TYPES=("zero-padded" "noised") # "source")
 POSITIONS=("early" "middle" "late")
 
 EXP_IDS=()
@@ -46,7 +46,7 @@ EXP_POSITIONS=()
 for TYPE in "${TYPES[@]}"; do
   for POS in "${POSITIONS[@]}"; do
     KEY=${LD_KEYS[$TYPE]}
-    EXP_ID="SKR-LD-${KEY^^}-${POS^^}-30s-B${BATCH}"
+    EXP_ID="SKR-LD-${KEY^^}-${POS^^}-${TARGET_LEN}s-B${BATCH}"
     EXP_IDS+=("${EXP_ID}")
     EXP_TYPES+=("${TYPE}")
     EXP_POSITIONS+=("${POS}")
@@ -131,7 +131,7 @@ if [[ "$MODE" == "--exp" ]]; then
     --exp_ids "${EXP_IDS[@]}" \
     --model_name "${MODEL}" \
     --batch_size "${BATCH}" \
-    --save_exp \
+    --inference_only \
     --skip_confirm >> "$LOGFILE" 2>&1
 
   STATUS=$?
