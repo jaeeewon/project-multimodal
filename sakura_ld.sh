@@ -131,6 +131,7 @@ if [[ "$MODE" == "--exp" ]]; then
     --exp_ids "${EXP_IDS[@]}" \
     --model_name "${MODEL}" \
     --batch_size "${BATCH}" \
+    --save_exp \
     --skip_confirm >> "$LOGFILE" 2>&1
 
   STATUS=$?

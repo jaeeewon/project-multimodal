@@ -10,7 +10,7 @@ class VllmJudge(AbstractJudge):
         self.seed = seed
         self.temperature = temperature
         self.top_p = top_p
-        self._client = AsyncOpenAI(base_url="http://vllm.hufs.jae.one:8080/v1", api_key="salmonn")
+        self._client = AsyncOpenAI(base_url="http://salmonn.hufs.jae.one:8080/v1", api_key="salmonn")
         self._client.models.list()
 
     @property

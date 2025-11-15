@@ -291,6 +291,17 @@ def shared(
                 rtns += evaluator.evaluate_data_provider(data_provider, batch_size=8)  # , cb=cb)
 
             if save_exp:
+                data_provider.update_filter({})
+
+                total_len = len(data_provider)
+                evaled_len = data_provider.len({"status": "evaluated"})
+                while evaled_len < total_len:
+                    print(
+                        f"[{device}] waiting for all data to be evaluated ({evaled_len}/{total_len})",
+                        flush=True,
+                    )
+                    time.sleep(3)
+                    evaled_len = data_provider.len({"status": "evaluated"})
                 save_experiment(exp_id, model_name, data_provider)
 
         result_queue.put(rtns)
@@ -301,16 +312,27 @@ def shared(
         result_queue.put((e, traceback.format_exc()))
 
 
-def main(exp_ids: list[str], devices: list[str], config: dict, model_name: str, save_exp: bool):
+def main(exp_ids: list[str], devices: list[str], config: dict, model_name: str, save_exp: bool, inference_only: bool):
     result_queue = Queue()
 
     error_event = Event()
 
     processes = [
         Process(
-            name=device, target=shared, args=(device, config, exp_ids, result_queue, error_event, model_name, save_exp)
+            name=device,
+            target=shared,
+            args=(
+                device,
+                config,
+                exp_ids,
+                result_queue,
+                error_event,
+                model_name,
+                i == 0 and not inference_only and save_exp,  # save_exp
+                inference_only,
+            ),
         )
-        for device in devices
+        for i, device in enumerate(devices)
     ]
 
     for process in processes:
@@ -361,6 +383,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=1, help="batch size for evaluation")
     parser.add_argument("--skip_confirm", action="store_true", help="confirm before running the experiment")
     parser.add_argument("--save_exp", action="store_true", help="save experiment results")
+    parser.add_argument("--inference_only", action="store_true", help="run inference only without evaluation")
     args = parser.parse_args()
 
     devices = args.devices
@@ -368,6 +391,7 @@ if __name__ == "__main__":
     exp_ids = args.exp_ids
     batch_size = args.batch_size
     save_exp = args.save_exp
+    inference_only = args.inference_only
 
     configs = {"salmonn-7b": "configs/eval_7b.yaml", "salmonn-13b": "configs/eval_13b.yaml"}
 
@@ -384,7 +408,14 @@ if __name__ == "__main__":
             exit(0)
 
     start_time = datetime.datetime.now()
-    main(exp_ids=exp_ids, devices=devices, config=config, model_name=model_name, save_exp=save_exp)
+    main(
+        exp_ids=exp_ids,
+        devices=devices,
+        config=config,
+        model_name=model_name,
+        save_exp=save_exp,
+        inference_only=inference_only,
+    )
     elapsed_time = datetime.datetime.now() - start_time
 
     print(f"===== totally elapsed for experiment {exp_ids} - {elapsed_time} =====")
