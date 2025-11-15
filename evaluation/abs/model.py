@@ -57,22 +57,27 @@ class AbstractModel(ABC):
 
         filter = {"status": "initialized"}
 
-        for batch in tqdm(data_provider.take(batch_size, filter), total=data_provider.len(filter)):
-            try:
-                batch_preds = inference_fn(batch, self) if inference_fn else self._inference(batch)
-                predicted.extend(batch_preds)
+        with tqdm(total=data_provider.len(filter), desc=f"[{self.model_name}] inferencing") as pbar:
+            for batch in data_provider.take(batch_size, filter):
+                try:
+                    batch_preds = inference_fn(batch, self) if inference_fn else self._inference(batch)
+                    predicted.extend(batch_preds)
 
-                for sample, inference in zip(batch, batch_preds):
-                    sample["status"] = "inferenced"
-                    sample["inference"] = inference
-                    if callback_fn:
-                        callback_fn(sample, inference)
-            except Exception as e:
-                print(f"failed to infer: {e}")
-                batch_preds = []
-                predicted.extend([f"_inference: {e}"] * len(batch))
+                    for sample, inference in zip(batch, batch_preds):
+                        sample["status"] = "inferenced"
+                        sample["inference"] = inference
+                        if callback_fn:
+                            callback_fn(sample, inference)
+                except Exception as e:
+                    print(f"failed to infer: {e}")
+                    batch_preds = []
+                    predicted.extend([f"_inference: {e}"] * len(batch))
 
-                for sample in batch:
-                    sample["status"] = "initialized"
+                    for sample in batch:
+                        sample["status"] = "initialized"
+
+                    if "CUDA out of memory." in str(e):
+                        raise e
+                pbar.update(len(batch))
 
         return predicted

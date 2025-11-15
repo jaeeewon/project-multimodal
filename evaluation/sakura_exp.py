@@ -3,8 +3,8 @@ from .types.redis_config import RedisConfig
 from .models.salmonn import SALMONNModel
 from .judges.vllm_judge import VllmJudge
 from .evaluators.llm_as_judge import LLMEvaluator
-import tempfile, yaml, datetime, os, traceback, re, pandas as pd
-from multiprocessing import Process, Queue
+import tempfile, yaml, datetime, os, traceback, re, pandas as pd, argparse, time
+from multiprocessing import Process, Queue, Event
 from collections import Counter
 from .salmonn_test import test_inference_fn, test_batch_inference
 
@@ -197,88 +197,148 @@ def save_experiment(base_exp_id: str, model_name: str, data_provider: SakuraData
     save_data(df_final)
 
 
-def shared(device: str, config: dict, data_provider: SakuraDataProvider, result_queue: Queue):
+def shared(
+    device: str,
+    config: dict,
+    exp_ids: list[str],
+    result_queue: Queue,
+    error_event,
+    model_name: str,
+    save_exp: bool,
+    inference_only: bool = True,
+):
     try:
         os.environ["CUDA_VISIBLE_DEVICES"] = device.split(":")[-1]
 
-        status_keys = ["status", "set", "hop"]
+        model: SALMONNModel = None
 
-        data_provider.status(keys=status_keys)
-        # data_provider.insert_ds(is_exp=True)
+        for i, exp_id in enumerate(exp_ids):
+            print(f"[{device}] starting experiment {exp_id} ({i+1}/{len(exp_ids)})", flush=True)
 
-        rtns = []
-
-        if not len(data_provider):
-            print(f"[{device}] inference already done")
-        else:
-            with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=True) as tmpfile:
-                config["model_class"]["device"] = "cuda:0"
-                yaml.dump(config, tmpfile)
-                model = SALMONNModel(config_path=tmpfile.name)
-
-            # def callback_fn(sample, inference):
-            #     ""
-
-            start_time = datetime.datetime.now()
-            infered = model.infer(
-                data_provider,
-                batch_size=config["run"]["batch_size_eval"],
-                # callback_fn=callback_fn,
-                inference_fn=test_batch_inference,
-            )
-            elapsed_time = datetime.datetime.now() - start_time
-
-            print(f"[{device}] evaluated {len(infered)} samples for {elapsed_time}")
-
-            rtns = infered
-
-        data_provider.update_filter({"status": "inferenced"})
-
-        if not len(data_provider):
-            print(f"[{device}] judge already done")
-        else:
-
-            judge = VllmJudge()
-            evaluator = LLMEvaluator(
-                judge=judge,
-                prompt_lambda=lambda prediction, sample: [
-                    {
-                        "role": "system",
-                        "content": system_prompt,
-                    },
-                    {
-                        "role": "user",
-                        "content": user_prompt.replace("[QUESTION]", sample["query"])
-                        .replace("[GROUND_TRUTH_ANSWER]", sample["text"])
-                        .replace("[MODEL_GENERATED_RESPONSE]", prediction),
-                    },
-                ],
-                task_name=f"{data_provider.data_id}:llm_as_a_judge",
+            # DB11: EXP
+            data_provider = SakuraDataProvider(
+                redis_cfg=RedisConfig(host="salmonn.hufs.jae.one", port=6379, db=11),
+                key_prefix=f"{model_name}:{exp_id}",
+                required_fields=["wav", "query"],
+                filter={},
             )
 
-            # def cb(tgt, ev):
-            #     ""
+            assert len(
+                data_provider
+            ), f"no data stored in redis for {data_provider.key_prefix}\ncheck if you've inserted data first"
 
-            rtns = evaluator.evaluate_data_provider(data_provider, batch_size=8)  # , cb=cb)
+            status_keys = ["status", "set", "hop"]
+
+            data_provider.status(keys=status_keys)
+            data_provider.update_filter({"status": "initialized"})
+
+            rtns = []
+
+            if not len(data_provider):
+                print(f"[{device}] inference already done")
+            else:
+                if model is None:
+                    with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=True) as tmpfile:
+                        config["model_class"]["device"] = "cuda:0"
+                        yaml.dump(config, tmpfile)
+                        model = SALMONNModel(config_path=tmpfile.name)
+                # def callback_fn(sample, inference):
+                #     ""
+
+                start_time = datetime.datetime.now()
+                infered = model.infer(
+                    data_provider,
+                    batch_size=config["run"]["batch_size_eval"],
+                    # callback_fn=callback_fn,
+                    inference_fn=test_batch_inference,
+                )
+                elapsed_time = datetime.datetime.now() - start_time
+
+                print(f"[{device}] evaluated {len(infered)} samples for {elapsed_time}", flush=True)
+
+                rtns += infered
+
+            if inference_only:
+                continue
+
+            data_provider.update_filter({"status": "inferenced"})
+
+            if not len(data_provider):
+                print(f"[{device}] judge already done")
+            else:
+
+                judge = VllmJudge()
+                evaluator = LLMEvaluator(
+                    judge=judge,
+                    prompt_lambda=lambda prediction, sample: [
+                        {
+                            "role": "system",
+                            "content": system_prompt,
+                        },
+                        {
+                            "role": "user",
+                            "content": user_prompt.replace("[QUESTION]", sample["query"])
+                            .replace("[GROUND_TRUTH_ANSWER]", sample["text"])
+                            .replace("[MODEL_GENERATED_RESPONSE]", prediction),
+                        },
+                    ],
+                    task_name=f"{data_provider.data_id}:llm_as_a_judge",
+                )
+
+                # def cb(tgt, ev):
+                #     ""
+
+                rtns += evaluator.evaluate_data_provider(data_provider, batch_size=8)  # , cb=cb)
+
+            if save_exp:
+                save_experiment(exp_id, model_name, data_provider)
 
         result_queue.put(rtns)
 
     except Exception as e:
+        print(f"[{device}] exception: {e}", flush=True)
+        error_event.set()
         result_queue.put((e, traceback.format_exc()))
 
 
-def main(exp_id: str, devices: list[str], config: dict, data_provider: SakuraDataProvider):
+def main(exp_ids: list[str], devices: list[str], config: dict, model_name: str, save_exp: bool):
     result_queue = Queue()
 
+    error_event = Event()
+
     processes = [
-        Process(name=device, target=shared, args=(device, config, data_provider, result_queue)) for device in devices
+        Process(
+            name=device, target=shared, args=(device, config, exp_ids, result_queue, error_event, model_name, save_exp)
+        )
+        for device in devices
     ]
 
     for process in processes:
         process.start()
 
+    try:
+        while True:
+            if error_event.is_set():
+                print("[main] terminating all processes due to error", flush=True)
+                for process in processes:
+                    process.terminate()
+                break
+
+            all_done = all(not process.is_alive() for process in processes)
+            if all_done:
+                break
+
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("[main] terminating all processes due to keyboard interrupt", flush=True)
+        for process in processes:
+            process.terminate()
+
     for process in processes:
         process.join()
+
+    if error_event.is_set():
+        exit(1)
 
     for process in processes:
         q = result_queue.get()
@@ -291,31 +351,40 @@ def main(exp_id: str, devices: list[str], config: dict, data_provider: SakuraDat
 
 
 if __name__ == "__main__":
-    # python -m evaluation.sakura_exp
-    devices = ["cuda:0", "cuda:1"]
-    # devices = ["cuda:2", "cuda:3"]
-    # devices = ["cuda:0", "cuda:1", "cuda:2"]
-    model_name = "salmonn-7b"
-    exp_id = "SLMN7-B1--base"
-
-    config = yaml.safe_load(open("configs/eval_7b.yaml"))
-    config["run"]["batch_size_eval"] = 1
-
-    # DB11: EXP
-    data_provider = SakuraDataProvider(
-        redis_cfg=RedisConfig(host="salmonn.hufs.jae.one", port=6379, db=11),
-        key_prefix=f"{model_name}:{exp_id}",
-        required_fields=["wav", "query"],
-        filter={"status": "initialized"},
+    # python -m evaluation.sakura_exp --device cuda:0 cuda:1 cuda:2 --model_name salmonn-7b --exp_ids SLMN7-SKR-LD-NZ-EARLY-30s-B8 --batch_size 8 --skip_confirm --save_exp
+    parser = argparse.ArgumentParser(description="sakura experiment tool")
+    parser.add_argument("--devices", type=str, nargs="+", required=True, help="devices to use")
+    parser.add_argument(
+        "--model_name", type=str, default="salmonn-7b", choices=["salmonn-7b", "salmonn-13b"], help="model name"
     )
-    # data_provider.delete_ds()
-    # data_provider.insert_ds(is_exp=True)
-    data_provider.insert_ds(is_exp=False)
-    # data_provider.status()
+    parser.add_argument("--exp_ids", type=str, nargs="+", required=True, help="experiment ids")
+    parser.add_argument("--batch_size", type=int, default=1, help="batch size for evaluation")
+    parser.add_argument("--skip_confirm", action="store_true", help="confirm before running the experiment")
+    parser.add_argument("--save_exp", action="store_true", help="save experiment results")
+    args = parser.parse_args()
+
+    devices = args.devices
+    model_name = args.model_name
+    exp_ids = args.exp_ids
+    batch_size = args.batch_size
+    save_exp = args.save_exp
+
+    configs = {"salmonn-7b": "configs/eval_7b.yaml", "salmonn-13b": "configs/eval_13b.yaml"}
+
+    config = yaml.safe_load(open(configs[model_name], "r"))
+    config["run"]["batch_size_eval"] = batch_size
+
+    if not args.skip_confirm:
+        print("===== experiment configuration =====")
+        confirm = input(
+            f"exp_ids: '{exp_ids}', model: '{model_name}', devices: '{devices}', batch_size: {batch_size}.\nis it ok to run? (y/n) > "
+        )
+        if confirm.lower() != "y":
+            print("experiment stopped by user")
+            exit(0)
 
     start_time = datetime.datetime.now()
-    main(exp_id=exp_id, devices=devices, config=config, data_provider=data_provider)
-    save_experiment(exp_id, model_name, data_provider)
+    main(exp_ids=exp_ids, devices=devices, config=config, model_name=model_name, save_exp=save_exp)
     elapsed_time = datetime.datetime.now() - start_time
 
-    print(f"===== totally elapsed for experiment {exp_id} - {elapsed_time} =====")
+    print(f"===== totally elapsed for experiment {exp_ids} - {elapsed_time} =====")

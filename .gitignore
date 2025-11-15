@@ -2,6 +2,7 @@
 dataset/
 hf/
 __pycache__/
+logs/
 *_ensured.json
 .secret
 *.tsv

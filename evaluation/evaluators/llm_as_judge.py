@@ -48,22 +48,32 @@ class LLMEvaluator(AbstractEvaluator):
 
         filter = {"status": "inferenced"}
 
-        for targets in tqdm(data_provider.take(batch_size, filter), total=data_provider.len(filter)):
-            for tgt, ev in zip(
-                targets,
-                self.evaluate([tgt["inference"] for tgt in targets], targets, batch_size=batch_size, use_tqdm=False),
-            ):
-                if ev.startswith("judge_err"):
-                    print(f"failed to evaluate {tgt}: {ev}")
+        with tqdm(total=data_provider.len(filter), desc=f"[LLMEvaluator] evaluating {self.task_name}") as pbar:
+            for targets in data_provider.take(batch_size, filter):
+                gonna_die = False
+                for tgt, ev in zip(
+                    targets,
+                    self.evaluate(
+                        [tgt["inference"] for tgt in targets], targets, batch_size=batch_size, use_tqdm=False
+                    ),
+                ):
+                    if ev.startswith("judge_err"):
+                        print(f"failed to evaluate {tgt}: {ev}")
 
-                    tgt["status"] = "initialized"
-                    continue
+                        tgt["status"] = "inferenced"
+                        gonna_die = True
+                        continue
 
-                tgt["status"] = "evaluated"
-                tgt["evaluation"] = ev
-                if cb:
-                    cb(tgt, ev)
-                evaluated.append(ev)
+                    tgt["status"] = "evaluated"
+                    tgt["evaluation"] = ev
+                    if cb:
+                        cb(tgt, ev)
+                    evaluated.append(ev)
+
+                pbar.update(len(targets))
+
+                if gonna_die:
+                    raise RuntimeError("evaluation failed due to judge error")
 
         return evaluated
 

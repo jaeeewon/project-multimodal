@@ -6,6 +6,9 @@ from ..utils.connection import RedisConnectionManager
 from ..utils.document import Document
 from ..types.redis_config import RedisConfig
 import json
+from datetime import datetime
+
+max_taken_seconds = 60  # override if a sample is taken for more than 60 seconds
 
 
 class RedisDataProvider(AbstractDataProvider):
@@ -24,6 +27,7 @@ class RedisDataProvider(AbstractDataProvider):
         required_fields_type: int = 0,
         filter: dict[str, Any] = None,
         filter_type: int = 1,
+        skip_empty_warning: bool = False,
     ):
         self.key_prefix = key_prefix
         self.key_pattern = f"{key_prefix}:*"
@@ -37,7 +41,8 @@ class RedisDataProvider(AbstractDataProvider):
 
         if not self.__len__():
             print(f'no keys found for the given prefix "{self.key_prefix}" and filter "{json.dumps(self._filter)}".')
-            input("press enter to continue or ctrl+c to abort > ")
+            if not skip_empty_warning:
+                input("press enter to continue or ctrl+c to abort > ")
 
     @property
     def data_id(self) -> str:
@@ -47,19 +52,24 @@ class RedisDataProvider(AbstractDataProvider):
         count = 0
         cursor = 0
 
+        curr = int(datetime.utcnow().timestamp())
         while cursor != 0 or count == 0:
             cursor, keys = self._redis_conn.scan(cursor=cursor, match=self.key_pattern, count=1000)
 
-            if not self._filter:
-                count += len(keys)
-            else:
-                for key in keys:
-                    sample = self._redis_conn.hgetall(key)
+            for key in keys:
+                sample = self._redis_conn.hgetall(key)
 
-                    if self._filter and len([k for k, v in self._filter.items() if k not in sample or sample[k] != v]):
-                        continue
+                if (
+                    "status" in sample
+                    and sample["status"] == "taken"
+                    and curr - int(sample["takenAt"]) > max_taken_seconds
+                ):
+                    sample["status"] = "initialized"
 
-                    count += 1
+                if self._filter and len([k for k, v in self._filter.items() if k not in sample or sample[k] != v]):
+                    continue
+
+                count += 1
 
             if cursor == 0:
                 break

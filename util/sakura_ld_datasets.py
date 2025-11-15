@@ -1,4 +1,7 @@
-import os, json, librosa, numpy as np, soundfile as sf
+import os, librosa, numpy as np, soundfile as sf, argparse
+
+from evaluation.data.sakura import SakuraDataProvider
+from evaluation.types.redis_config import RedisConfig
 from .sakura_datasets import get_sakura_ds
 
 
@@ -67,12 +70,51 @@ def get_sakura_ld_ds(type: str, pos: str, target_len: int, is_exp=False, gen=Fal
 
 
 if __name__ == "__main__":
-    for target_len in [30]:
-        for type in ld_conf["ld_keys"].keys():
-            for pos in ld_conf["positions"]:
-                ds = get_sakura_ld_ds(type, pos, target_len=target_len, is_exp=True, gen=True)
-                print(ds[0])
+    # python -m util.sakura_ld_datasets --model_name salmonn-7b --exp_id SLMN7-SKR-LD-NZ-EARLY-30s-B8 --type noised --pos early --target_len 30 --is_exp (--force)
+    parser = argparse.ArgumentParser(description="sakura_ld dataset tool")
+    parser.add_argument("--model_name", type=str, default="salmonn-7b", help="model name")
+    parser.add_argument("--exp_id", type=str, required=True, help="experiment id")
+    parser.add_argument("--type", type=str, required=True, help="type of ld dataset")
+    parser.add_argument("--pos", type=str, required=True, help="position of ld dataset")
+    parser.add_argument("--target_len", type=int, required=True, help="target length of ld dataset")
+    parser.add_argument("--is_exp", action="store_true", help="whether to use partial dataset for experiment")
+    parser.add_argument("--force", action="store_true", help="whether to force insert even if dataset exists")
+    args = parser.parse_args()
 
-                json_path = f"ann/sakura_ld/sakura_ld_{ld_conf['ld_keys'][type]}_{pos}_{target_len}.json"
-                with open(json_path, "w") as f:
-                    json.dump({"annotation": ds}, f, indent=4, ensure_ascii=False)
+    model_name = args.model_name
+    exp_id = args.exp_id
+    ld_type = args.type
+    ld_pos = args.pos
+    target_len = args.target_len
+    is_exp = args.is_exp
+    force = args.force
+
+    data_provider = SakuraDataProvider(
+        redis_cfg=RedisConfig(host="salmonn.hufs.jae.one", port=6379, db=11),
+        key_prefix=f"{model_name}:{exp_id}",
+        required_fields=["wav", "query"],
+        filter={},
+        skip_empty_warning=True,
+    )
+
+    assert force or not len(
+        data_provider
+    ), f"dataset already exists for the given model_name {model_name} and exp_id {exp_id}. use --force to override."
+
+    ds = [
+        {**d, "key": f"{data_provider.data_id}:{i}", "status": "initialized"}
+        for i, d in enumerate(get_sakura_ld_ds(ld_type, ld_pos, target_len=target_len, is_exp=is_exp, gen=True))
+    ]
+    data_provider.insert_samples(ds)
+    print(f"inserted {len(ds)} samples to redis for the given model_name {model_name} and exp_id {exp_id}.")
+    print(args)
+
+    # for target_len in [30]:
+    #     for type in ld_conf["ld_keys"].keys():
+    #         for pos in ld_conf["positions"]:
+    #             ds = get_sakura_ld_ds(type, pos, target_len=target_len, is_exp=True, gen=True)
+    #             print(ds[0])
+
+    #             json_path = f"ann/sakura_ld/sakura_ld_{ld_conf['ld_keys'][type]}_{pos}_{target_len}.json"
+    #             with open(json_path, "w") as f:
+    #                 json.dump({"annotation": ds}, f, indent=4, ensure_ascii=False)

@@ -42,8 +42,8 @@ class AbstractDataProvider(ABC):
                 sample["takenAt"] = curr
                 samples.append(sample)
             else:
-                sample["status"] = "taken"
                 sample["takenAt"] = curr
+                sample["status"] = "taken"
                 samples.append(sample)
 
             if len(samples) == n:
