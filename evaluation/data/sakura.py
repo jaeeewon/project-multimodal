@@ -4,7 +4,14 @@ from ..types.redis_config import RedisConfig
 
 
 class SakuraDataProvider(RedisDataProvider):
-    def __init__(self, redis_cfg: RedisConfig, key_prefix: str, required_fields: list[str] = None, filter: dict = None):
+    def __init__(
+        self,
+        redis_cfg: RedisConfig,
+        key_prefix: str,
+        required_fields: list[str] = None,
+        filter: dict = None,
+        skip_empty_warning: bool = False,
+    ):
         super().__init__(
             redis_cfg=redis_cfg,
             key_prefix=key_prefix,
@@ -12,6 +19,7 @@ class SakuraDataProvider(RedisDataProvider):
             required_fields_type=RedisDataProvider.skip_type_enum_rev["strict"],
             filter=filter,
             filter_type=RedisDataProvider.skip_type_enum_rev["skip_missing_without_warn"],
+            skip_empty_warning=skip_empty_warning,
         )
 
     def insert_ds(self, is_exp=False):
