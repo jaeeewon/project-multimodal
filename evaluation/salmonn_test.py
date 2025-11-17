@@ -7,7 +7,7 @@ from salmonn.models.utils import StoppingCriteriaSub
 from transformers import StoppingCriteriaList
 
 
-def test_batch_inference(batch, salmonn_model: SALMONNModel, debug=False):
+def test_batch_inference(batch, salmonn_model: SALMONNModel, genargs: dict={}, debug=False):
     samples = []
     for data in batch:
         audio, sr = torchaudio.load(data["wav"])
@@ -113,6 +113,7 @@ def test_batch_inference(batch, salmonn_model: SALMONNModel, debug=False):
             repetition_penalty=generate_cfg.get("repetition_penalty", 1.0),
             length_penalty=generate_cfg.get("length_penalty", 1.0),
             attention_mask=attention_mask,
+            **genargs
         )
 
     generated_text = salmonn_model.model.llama_tokenizer.batch_decode(

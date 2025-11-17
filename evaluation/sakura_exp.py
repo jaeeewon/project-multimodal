@@ -4,7 +4,7 @@ from .models.salmonn import SALMONNModel
 from .judges.vllm_judge import VllmJudge
 from .evaluators.llm_as_judge import LLMEvaluator
 import tempfile, yaml, datetime, os, traceback, re, pandas as pd, argparse, time
-from multiprocessing import Process, Queue, Event
+from multiprocessing import Process, Queue, Event, set_start_method
 from collections import Counter
 from .salmonn_test import test_inference_fn, test_batch_inference
 
@@ -304,15 +304,17 @@ def shared(
                     evaled_len = data_provider.len({"status": "evaluated"})
                 save_experiment(exp_id, model_name, data_provider)
 
-        result_queue.put(rtns)
+        result_queue.put(len(rtns))
+        exit(0)
 
     except Exception as e:
         print(f"[{device}] exception: {e}", flush=True)
-        error_event.set()
         result_queue.put((e, traceback.format_exc()))
+        error_event.set()
 
 
 def main(exp_ids: list[str], devices: list[str], config: dict, model_name: str, save_exp: bool, inference_only: bool):
+    set_start_method("spawn", force=True)
     result_queue = Queue()
 
     error_event = Event()
@@ -348,16 +350,20 @@ def main(exp_ids: list[str], devices: list[str], config: dict, model_name: str, 
 
             all_done = all(not process.is_alive() for process in processes)
             if all_done:
+                print("[main] all processes done", flush=True)
                 break
 
             time.sleep(0.1)
     except KeyboardInterrupt:
         print("[main] terminating all processes due to keyboard interrupt", flush=True)
+        error_event.set()
         for process in processes:
             process.terminate()
 
+    print("[main] joining all processes", flush=True)
     for process in processes:
         process.join()
+        print(f"[main] joined process {process.name}", flush=True)
 
     if error_event.is_set():
         exit(1)
@@ -369,11 +375,11 @@ def main(exp_ids: list[str], devices: list[str], config: dict, model_name: str, 
             print(f" - exception: {q[0]}")
             print(f" - traceback:\n{q[1]}")
         else:
-            print(f"[{process.name}] processed {len(q)} documents totally")
+            print(f"[{process.name}] processed {q} documents totally")
 
 
 if __name__ == "__main__":
-    # python -m evaluation.sakura_exp --device cuda:0 cuda:1 cuda:2 --model_name salmonn-7b --exp_ids SLMN7-SKR-LD-NZ-EARLY-30s-B8 --batch_size 8 --skip_confirm --save_exp
+    # python -m evaluation.sakura_exp --device cuda:0 cuda:1 cuda:2 --model_name salmonn-7b --exp_ids SKR-BEATS_ZP-B5 --batch_size 5 --skip_confirm --save_exp --inference_only
     parser = argparse.ArgumentParser(description="sakura experiment tool")
     parser.add_argument("--devices", type=str, nargs="+", required=True, help="devices to use")
     parser.add_argument(

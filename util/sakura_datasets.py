@@ -3,7 +3,7 @@ import os, json
 sakura_path = "/home/jpong/Workspace/jaeeewon/repr/sakura"
 
 
-def get_sakura_ds(is_exp=False):
+def get_sakura_ds(is_exp=False, exclude_answer: bool = False):
     sakura = []
 
     for sets in os.listdir(os.path.join(sakura_path, "data")):
@@ -17,6 +17,11 @@ def get_sakura_ds(is_exp=False):
         for i, (k, v) in enumerate(metadata.items()):
             if is_exp and i % 50:
                 continue
+
+            if exclude_answer:
+                v["single_instruction"] = v["single_instruction"].split(" (")[0]
+                v["multi_instruction"] = v["multi_instruction"].split(" (")[0]
+
             sakura.append(
                 {
                     "id": len(sakura),
@@ -59,7 +64,9 @@ def get_sakura_wrong_ds(multi_only=True):
 
 
 if __name__ == "__main__":
-    ds = get_sakura_ds()
+    ds = get_sakura_ds(exclude_answer=True)
+    for d in ds:
+        print(d['query'])
 
-    with open("ann/sakura.json", "w") as f:
+    with open("ann/sakura_exclude_answer.json", "w") as f:
         json.dump({"annotation": ds}, f, indent=4)

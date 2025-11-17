@@ -72,7 +72,7 @@ def get_sakura_ld_ds(type: str, pos: str, target_len: int, is_exp=False, gen=Fal
 
 
 if __name__ == "__main__":
-    # python -m util.sakura_ld_datasets --model_name salmonn-7b --exp_id SLMN7-SKR-LD-NZ-EARLY-30s-B8 --type noised --pos early --target_len 30 --is_exp (--force)
+    # python -m util.sakura_ld_datasets --model_name salmonn-7b --exp_id SKR-BEATS_ZP-B5 --type source --pos original --target_len 30 (--is_exp) (--force)
     parser = argparse.ArgumentParser(description="sakura_ld dataset tool")
     parser.add_argument("--model_name", type=str, default="salmonn-7b", help="model name")
     parser.add_argument("--exp_id", type=str, required=True, help="experiment id")
